@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Times New Roman", Georgia, serif;
+  --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-paper text-ink font-body;
+    /* Papier vieilli : subtle grain + vignette (Tome 1 section 6). */
+    background-color: #f4f0e8;
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(201, 166, 77, 0.08), transparent 45%),
+      radial-gradient(circle at 85% 88%, rgba(196, 18, 47, 0.06), transparent 40%),
+      repeating-linear-gradient(
+        0deg,
+        rgba(34, 34, 34, 0.018) 0px,
+        rgba(34, 34, 34, 0.018) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    min-height: 100vh;
+  }
+
+  h1, h2, h3 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .retro-card {
+    @apply bg-paper border-2 border-ink/80 shadow-card rounded-sm;
+  }
+
+  .retro-btn {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5
+      font-display font-bold uppercase tracking-wide border-2 border-ink
+      bg-paper text-ink rounded-sm shadow-card transition
+      hover:-translate-y-0.5 hover:shadow-card-lift active:translate-y-0
+      disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+  }
+
+  .retro-btn-primary {
+    @apply bg-retro text-paper border-ink hover:bg-retro-dark;
+  }
+
+  .retro-btn-gold {
+    @apply bg-gold text-ink border-ink hover:bg-gold-light;
+  }
+
+  .stamp {
+    @apply inline-block font-display font-extrabold uppercase tracking-widest
+      border-4 border-retro text-retro px-3 py-1 rounded
+      animate-stamp-in;
+  }
+
+  .ledger {
+    @apply w-full text-sm border-collapse;
+  }
+  .ledger th {
+    @apply text-left font-display uppercase text-xs tracking-wider
+      border-b-2 border-ink/70 py-2 px-2 text-ink/70;
+  }
+  .ledger td {
+    @apply border-b border-ink/15 py-2 px-2;
+  }
+}
+
+/* thin retro scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 34, 34, 0.4) transparent;
+}
