@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Shell } from "@/components/Shell";
 import { useGame } from "@/lib/store";
+import { useChallenge } from "@/lib/challenge";
 import type { HistoricalDepth, SimulationMode } from "@/lib/types";
 
 const DEPTHS: { value: HistoricalDepth; label: string }[] = [
@@ -15,6 +16,7 @@ const DEPTHS: { value: HistoricalDepth; label: string }[] = [
 
 export function Home() {
   const createLeague = useGame((s) => s.createLeague);
+  const startChallenge = useChallenge((s) => s.start);
   const [name, setName] = useState("Ligue des Souvenirs");
   const [clubName, setClubName] = useState("Mon Club");
   const [clubCount, setClubCount] = useState(8);
@@ -39,6 +41,29 @@ export function Home() {
             <li>★ Championnat simule, narration vivante</li>
             <li>★ Clubs IA, mercato d&apos;echanges, Hall of Fame</li>
           </ul>
+
+          <div className="retro-card p-4 bg-ink text-paper border-gold">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-gold text-lg">⚡</span>
+              <h3 className="font-display font-bold text-paper">Mode Defi</h3>
+              <span className="text-[10px] uppercase tracking-widest text-gold border border-gold rounded px-1.5 py-0.5">
+                Rapide
+              </span>
+            </div>
+            <p className="text-sm text-paper/80 mb-3">
+              Tire ton XI a la roue et tente la{" "}
+              <strong className="text-gold">saison parfaite</strong>. Peux-tu
+              finir invaincu ? 2 minutes, aucun ami requis.
+            </p>
+            <button
+              type="button"
+              className="retro-btn retro-btn-gold w-full"
+              onClick={() => startChallenge(clubName)}
+            >
+              Relever le defi →
+            </button>
+          </div>
+
           <p className="text-xs text-ink/50 italic">
             &laquo; Oh putain, je m&apos;en souviens. &raquo;
           </p>
