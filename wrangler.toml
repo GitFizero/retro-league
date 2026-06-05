@@ -1,0 +1,9 @@
+# Cloudflare Pages — Retro League (via @cloudflare/next-on-pages).
+# IMPORTANT : c'est un projet *Pages*, pas un Worker classique.
+#   - Build  : npx @cloudflare/next-on-pages@1
+#   - Deploy : npx wrangler pages deploy   (PAS `wrangler deploy`)
+name = "retro-league"
+pages_build_output_dir = ".vercel/output/static"
+compatibility_date = "2024-11-01"
+# Requis : le bundle des routes API (Supabase) utilise des APIs Node.
+compatibility_flags = ["nodejs_compat"]
