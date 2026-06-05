@@ -15,7 +15,12 @@ describe("content bible integrity", () => {
   });
 
   it("gives every player a unique version id (versioning par saison)", () => {
-    expect(PLAYERS_BY_ID.size).toBe(ALL_PLAYERS.length);
+    const ids = new Set(ALL_PLAYERS.map((p) => p.id));
+    expect(ids.size).toBe(ALL_PLAYERS.length);
+    // Every draftable player is resolvable via the lookup (which also holds
+    // the academy youths used for replacements).
+    expect(PLAYERS_BY_ID.size).toBeGreaterThanOrEqual(ALL_PLAYERS.length);
+    for (const p of ALL_PLAYERS) expect(PLAYERS_BY_ID.has(p.id)).toBe(true);
   });
 
   it("slugifies ids without accents or spaces", () => {

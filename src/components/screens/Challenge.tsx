@@ -25,6 +25,7 @@ function ChallengeDraft() {
   const undo = useChallenge((s) => s.undo);
   const run = useChallenge((s) => s.run);
   const reset = useChallenge((s) => s.reset);
+  const rerollsLeft = useChallenge((s) => s.rerollsLeft);
 
   // Slot-machine roll whenever a new draw arrives.
   const [rolling, setRolling] = useState(false);
@@ -57,8 +58,13 @@ function ChallengeDraft() {
           Joueur <span className="text-retro font-bold">{xi.length}</span> /{" "}
           {CHALLENGE_XI}
         </div>
-        <div className="flex gap-2">
-          {xi.length > 0 && (
+        <div className="flex items-center gap-2">
+          {rerollsLeft > 0 && (
+            <span className="text-xs font-display text-gold border border-gold rounded px-2 py-0.5">
+              {rerollsLeft} reroll{rerollsLeft > 1 ? "s" : ""}
+            </span>
+          )}
+          {xi.length > 0 && rerollsLeft > 0 && (
             <button className="retro-btn text-xs" onClick={undo}>
               ↩ Annuler
             </button>
@@ -134,9 +140,15 @@ function ChallengeDraft() {
                       />
                     ))}
                   </div>
-                  <button className="retro-btn mt-5 text-xs" onClick={spin}>
-                    ↻ Relancer la roue
-                  </button>
+                  {rerollsLeft > 0 ? (
+                    <button className="retro-btn mt-5 text-xs" onClick={spin}>
+                      ↻ Relancer la roue ({rerollsLeft})
+                    </button>
+                  ) : (
+                    <p className="mt-5 text-xs text-ink/50 italic">
+                      Mode normal : pas de reroll. Assume ton tirage.
+                    </p>
+                  )}
                 </>
               )}
             </section>

@@ -4,6 +4,13 @@ import {
   NARRATIVE_EVENTS,
   narrateGoal,
 } from "@/lib/content/narration";
+import {
+  BRAWL_LINES,
+  INVASION_LINES,
+  RED_CARD_LINES,
+  YELLOW_CARD_LINES,
+  renderText,
+} from "@/lib/content/events";
 import { lineStrengths, teamRating } from "@/lib/engine/composition";
 import { Rng } from "@/lib/engine/rng";
 import type {
@@ -193,9 +200,16 @@ export function simulateFixture(
   const homeLegendBoost = homeArmed.length > 0 ? 1.1 : 1;
   const awayLegendBoost = awayArmed.length > 0 ? 1.1 : 1;
 
+  // Faits divers en match : cartons, bagarre, envahissement (Tome 3 :
+  // "Cartons +30%" dans les rivalites). Un rouge affaiblit l'equipe.
+  const incidents = rollMatchIncidents(home, away, rng, Boolean(rivalry));
+  const homeRedMalus = incidents.homeReds > 0 ? 0.9 ** incidents.homeReds : 1;
+  const awayRedMalus = incidents.awayReds > 0 ? 0.9 ** incidents.awayReds : 1;
+
   const homeStrength =
-    homeBase * homeAdv * homeForm * homeRand * homeLegendBoost;
-  const awayStrength = awayBase * awayForm * awayRand * awayLegendBoost;
+    homeBase * homeAdv * homeForm * homeRand * homeLegendBoost * homeRedMalus;
+  const awayStrength =
+    awayBase * awayForm * awayRand * awayLegendBoost * awayRedMalus;
 
   // Expected goals from attack vs opponent defense.
   const homeLines = lineStrengths(home.lineup);
@@ -217,6 +231,7 @@ export function simulateFixture(
   const events: MatchEvent[] = [];
   buildGoals(events, home, homeGoalsCount, homeArmed, rng);
   buildGoals(events, away, awayGoalsCount, awayArmed, rng);
+  events.push(...incidents.events);
   events.sort((a, b) => a.minute - b.minute);
 
   addNarrativeEvents(events, {
@@ -394,6 +409,84 @@ function detectComeback(
 
 function brave(clubId: string, description: string): MatchEvent {
   return { minute: 90, type: "narrative", clubId, description };
+}
+
+interface IncidentRoll {
+  events: MatchEvent[];
+  homeReds: number;
+  awayReds: number;
+}
+
+/** Cards, brawls and pitch invasions. Frequency rises in rivalries. */
+function rollMatchIncidents(
+  home: Club,
+  away: Club,
+  rng: Rng,
+  isRivalry: boolean
+): IncidentRoll {
+  const events: MatchEvent[] = [];
+  const factor = isRivalry ? 1.3 : 1; // "Cartons +30%" (Tome 3)
+  let homeReds = 0;
+  let awayReds = 0;
+
+  for (const club of [home, away]) {
+    const xi = starters(club.lineup);
+    if (xi.length === 0) continue;
+    // Cards target defenders/midfielders more (inverse of attack weight).
+    const cardWeight = xi.map(
+      ({ assigned }) => 1.1 - ATTACK_WEIGHT[assigned] * 0.6
+    );
+
+    const yellows = Math.min(4, Math.round(rng.float(0, 2.2 * factor)));
+    for (let i = 0; i < yellows; i++) {
+      const p = xi[weightedIndex(rng, cardWeight)].player;
+      events.push({
+        minute: rng.int(15, 90),
+        type: "card",
+        card: "yellow",
+        clubId: club.id,
+        playerId: p.id,
+        description: renderText(rng.pick(YELLOW_CARD_LINES), {
+          player: p.name,
+          club: club.name,
+        }),
+      });
+    }
+
+    if (rng.bool(0.06 * factor)) {
+      const p = xi[weightedIndex(rng, cardWeight)].player;
+      if (club.id === home.id) homeReds++;
+      else awayReds++;
+      events.push({
+        minute: rng.int(25, 90),
+        type: "card",
+        card: "red",
+        clubId: club.id,
+        playerId: p.id,
+        description: renderText(rng.pick(RED_CARD_LINES), {
+          player: p.name,
+          club: club.name,
+        }),
+      });
+    }
+  }
+
+  if (rng.bool(0.05 * factor)) {
+    events.push({
+      minute: rng.int(30, 88),
+      type: "incident",
+      description: rng.pick(BRAWL_LINES),
+    });
+  }
+  if (rng.bool(0.03 * factor)) {
+    events.push({
+      minute: rng.int(20, 85),
+      type: "incident",
+      description: rng.pick(INVASION_LINES),
+    });
+  }
+
+  return { events, homeReds, awayReds };
 }
 
 function nextForm(form: number, scored: number, conceded: number): number {

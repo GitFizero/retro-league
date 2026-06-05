@@ -119,6 +119,23 @@ export interface Club {
   formation: FormationName;
   /** Running form value in [-1, 1], drifts with results. */
   form: number;
+  /** Cumulative points deduction (DNCG & co.) applied to the standings. */
+  pointsPenalty?: number;
+  /** If set, the club forfeits its next match (greve du bus...). */
+  forfeitNext?: boolean;
+  /** Player id (in squad) who has handed in a transfer request. */
+  wantaway?: string;
+}
+
+/** Off-pitch incident applied between matchdays (les "Faits Divers"). */
+export interface NewsItem {
+  id: string;
+  matchday: number;
+  clubId: string;
+  clubName: string;
+  kind: string;
+  title: string;
+  text: string;
 }
 
 export interface LineupEntry {
@@ -167,6 +184,8 @@ export type MatchEventType =
   | "goal"
   | "legendary"
   | "narrative"
+  | "card"
+  | "incident"
   | "kickoff"
   | "fulltime";
 
@@ -178,6 +197,8 @@ export interface MatchEvent {
   assistId?: string;
   /** Dynamic narration line (Tome 2, section 11). */
   description: string;
+  /** For card events. */
+  card?: "yellow" | "red";
 }
 
 /** Legendary Moment definition (Tome 3 — feature signature). */

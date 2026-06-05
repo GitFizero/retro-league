@@ -13,7 +13,8 @@ export function Season() {
   const playMatchday = useGame((s) => s.playMatchday);
   const simulateRest = useGame((s) => s.simulateRestOfSeason);
   const seasonNumber = useGame((s) => s.seasonNumber);
-  const [tab, setTab] = useState<"results" | "standings">("results");
+  const [tab, setTab] = useState<"results" | "standings" | "news">("results");
+  const news = useGame((s) => s.news);
   const [openFixture, setOpenFixture] = useState<Fixture | null>(null);
   const [liveOpen, setLiveOpen] = useState(false);
   const [viewMd, setViewMd] = useState<number | null>(null);
@@ -96,7 +97,35 @@ export function Season() {
         <Tab active={tab === "standings"} onClick={() => setTab("standings")}>
           Classement
         </Tab>
+        <Tab active={tab === "news"} onClick={() => setTab("news")}>
+          Faits Divers{news.length > 0 ? ` (${news.length})` : ""}
+        </Tab>
       </div>
+
+      {tab === "news" && (
+        <div className="space-y-2">
+          {news.length === 0 ? (
+            <p className="text-sm text-ink/55 italic">
+              Rien a signaler… pour l&apos;instant. Le foot francais reserve
+              toujours des surprises.
+            </p>
+          ) : (
+            news.map((n) => (
+              <div key={n.id} className="retro-card p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-display font-bold text-retro text-sm">
+                    {n.title}
+                  </span>
+                  <span className="text-[10px] uppercase tracking-wide text-ink/50">
+                    J{n.matchday} · {n.clubName}
+                  </span>
+                </div>
+                <p className="text-sm text-ink/80 mt-1">{n.text}</p>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {tab === "standings" && (
         <div className="retro-card p-4 overflow-x-auto">

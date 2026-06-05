@@ -126,6 +126,14 @@ export function computeStandings(
     }
   }
 
+  for (const club of clubs) {
+    const row = rows.get(club.id);
+    if (row && club.pointsPenalty) {
+      // Sanctions DNCG & co. (peuvent rendre le total negatif).
+      row.points -= club.pointsPenalty;
+    }
+  }
+
   for (const row of rows.values()) {
     row.goalDifference = row.goalsFor - row.goalsAgainst;
   }

@@ -1,4 +1,5 @@
 import type { Era, HistoricalTeam, Player, Position } from "@/lib/types";
+import { YOUTH_PLAYERS } from "@/lib/content/youth";
 
 /**
  * THE CONTENT BIBLE (PRD Tome 3).
@@ -701,10 +702,12 @@ const RAW_TEAMS: RawTeam[] = [
 const EXPANDED = RAW_TEAMS.map(expand);
 
 export const HISTORICAL_TEAMS: HistoricalTeam[] = EXPANDED.map((e) => e.team);
+/** Draftable historical players (does NOT include academy youths). */
 export const ALL_PLAYERS: Player[] = EXPANDED.flatMap((e) => e.players);
 
+// Youths are resolvable via getPlayer (for replacements) but never drafted.
 export const PLAYERS_BY_ID = new Map<string, Player>(
-  ALL_PLAYERS.map((p) => [p.id, p])
+  [...ALL_PLAYERS, ...YOUTH_PLAYERS].map((p) => [p.id, p])
 );
 export const TEAMS_BY_ID = new Map<string, HistoricalTeam>(
   HISTORICAL_TEAMS.map((t) => [t.id, t])

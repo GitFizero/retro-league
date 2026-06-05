@@ -158,11 +158,32 @@ function EventRow({
   home: Club;
   away: Club;
 }) {
-  if (event.type === "narrative") {
+  if (event.type === "narrative" || event.type === "incident") {
     return (
       <p className="text-sm italic text-ink/75 text-center border-y border-dashed border-ink/25 py-2">
-        &laquo; {event.description} &raquo;
+        {event.type === "incident" ? "⚠️ " : ""}&laquo; {event.description} &raquo;
       </p>
+    );
+  }
+
+  if (event.type === "card") {
+    const red = event.card === "red";
+    const cardPlayer = event.playerId ? getPlayer(event.playerId) : undefined;
+    return (
+      <div className="flex items-center gap-3">
+        <div
+          className={`shrink-0 w-8 h-10 rounded-sm border-2 border-ink ${
+            red ? "bg-retro" : "bg-gold"
+          }`}
+          title={red ? "Carton rouge" : "Carton jaune"}
+        />
+        <div className="min-w-0">
+          <div className="text-sm leading-snug">{event.description}</div>
+          {cardPlayer && (
+            <div className="text-[11px] text-ink/55">{cardPlayer.name}</div>
+          )}
+        </div>
+      </div>
     );
   }
 

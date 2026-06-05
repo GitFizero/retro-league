@@ -22,6 +22,7 @@ export function Home() {
   const [clubCount, setClubCount] = useState(8);
   const [mode, setMode] = useState<SimulationMode>("rapide");
   const [depth, setDepth] = useState<HistoricalDepth>("TOUTE_HISTOIRE");
+  const [difficulty, setDifficulty] = useState<"normal" | "easy">("normal");
 
   return (
     <Shell>
@@ -58,7 +59,7 @@ export function Home() {
             <button
               type="button"
               className="retro-btn retro-btn-gold w-full"
-              onClick={() => startChallenge(clubName)}
+              onClick={() => startChallenge(clubName, difficulty)}
             >
               Relever le defi →
             </button>
@@ -79,6 +80,7 @@ export function Home() {
               clubCount,
               simulationMode: mode,
               historicalDepth: depth,
+              difficulty,
             });
           }}
         >
@@ -143,6 +145,23 @@ export function Home() {
                 onClick={() => setMode("validation")}
                 title="Validation"
                 desc="Journee par journee"
+              />
+            </div>
+          </Field>
+
+          <Field label="Difficulte du tirage">
+            <div className="flex gap-2">
+              <ModeBtn
+                active={difficulty === "normal"}
+                onClick={() => setDifficulty("normal")}
+                title="Normal"
+                desc="Aucun reroll"
+              />
+              <ModeBtn
+                active={difficulty === "easy"}
+                onClick={() => setDifficulty("easy")}
+                title="Easy"
+                desc="3 rerolls"
               />
             </div>
           </Field>

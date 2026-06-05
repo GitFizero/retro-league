@@ -43,6 +43,7 @@ describe("game store — full loop & multi-season", () => {
       clubCount: 6,
       simulationMode: "rapide",
       historicalDepth: "TOUTE_HISTOIRE",
+      difficulty: "normal",
     });
     expect(useGame.getState().league?.status).toBe("draft");
 
@@ -65,6 +66,7 @@ describe("game store — full loop & multi-season", () => {
       clubCount: 4,
       simulationMode: "rapide",
       historicalDepth: "DEPUIS_2007",
+      difficulty: "normal",
     });
     autoDraft();
     const squadBefore = useGame.getState().humanClub()!.squad;
@@ -93,6 +95,7 @@ describe("game store — full loop & multi-season", () => {
       clubCount: 4,
       simulationMode: "rapide",
       historicalDepth: "TOUTE_HISTOIRE",
+      difficulty: "normal",
     });
     autoDraft();
     const before = useGame.getState();

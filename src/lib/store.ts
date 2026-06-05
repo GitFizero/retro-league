@@ -26,11 +26,17 @@ import {
 } from "@/lib/engine/fixtures";
 import { Rng } from "@/lib/engine/rng";
 import { simulateFixture } from "@/lib/engine/simulation";
+import {
+  isRealNews,
+  resolveWantaway,
+  rollOffPitch,
+} from "@/lib/engine/events";
 import type {
   Club,
   FormationName,
   HistoricalDepth,
   League,
+  NewsItem,
   SimulationMode,
   StandingRow,
   TradeOffer,
@@ -38,13 +44,19 @@ import type {
 
 export const HUMAN_CLUB_ID = "human";
 
+export type Difficulty = "normal" | "easy";
+
 export interface CreateLeagueInput {
   name: string;
   clubName: string;
   clubCount: number;
   simulationMode: SimulationMode;
   historicalDepth: HistoricalDepth;
+  /** "normal" = aucun reroll de draft, "easy" = 3 rerolls. */
+  difficulty: Difficulty;
 }
+
+export const REROLLS: Record<Difficulty, number> = { normal: 0, easy: 3 };
 
 /** One finished season recorded for the multi-season Palmares. */
 export interface PalmaresEntry {
@@ -63,6 +75,8 @@ interface GameState {
   offers: TradeOffer[];
   seasonNumber: number;
   palmares: PalmaresEntry[];
+  rerollsLeft: number;
+  news: NewsItem[];
 
   createLeague: (input: CreateLeagueInput) => void;
   pickHumanPlayer: (playerId: string) => void;
@@ -96,7 +110,14 @@ function randomInviteCode(): string {
 }
 
 function newDraw(seed: number, depth: HistoricalDepth, owned: Set<string>): DraftDraw {
-  return makeHumanDraw(new Rng(seed + draftCounter++), depth, owned);
+  // Guarantee a pickable draw: if every shown player is already owned, re-draw
+  // for free (this is not a reroll — the player simply had no valid choice).
+  let draw = makeHumanDraw(new Rng(seed + draftCounter++), depth, owned);
+  for (let i = 0; i < 12; i++) {
+    if (draw.players.some((p) => !owned.has(p.id))) break;
+    draw = makeHumanDraw(new Rng(seed + draftCounter++), depth, owned);
+  }
+  return draw;
 }
 
 function buildAiClubs(
@@ -137,6 +158,8 @@ export const useGame = create<GameState>()(
       offers: [],
       seasonNumber: 1,
       palmares: [],
+      rerollsLeft: 0,
+      news: [],
 
       createLeague: (input) => {
         const seed = Math.floor(Math.random() * 1e9);
@@ -176,6 +199,8 @@ export const useGame = create<GameState>()(
           offers: [],
           seasonNumber: 1,
           palmares: [],
+          rerollsLeft: REROLLS[input.difficulty],
+          news: [],
           humanDraw: newDraw(seed, input.historicalDepth, new Set()),
         });
       },
@@ -217,10 +242,11 @@ export const useGame = create<GameState>()(
       },
 
       skipDraw: () => {
-        const { league, draftSeed } = get();
-        if (!league) return;
+        const { league, draftSeed, rerollsLeft } = get();
+        if (!league || rerollsLeft <= 0) return; // pas de reroll en mode normal
         const human = league.clubs.find((c) => c.id === HUMAN_CLUB_ID);
         set({
+          rerollsLeft: rerollsLeft - 1,
           humanDraw: newDraw(
             draftSeed,
             league.historicalDepth,
@@ -294,9 +320,11 @@ export const useGame = create<GameState>()(
       },
 
       playMatchday: () => {
-        const { league } = get();
+        const { league, news } = get();
         if (!league || league.status !== "season") return;
-        set({ league: playOneMatchday(league) });
+        const played = playOneMatchday(league);
+        const off = applyOffPitch(played);
+        set({ league: off.league, news: [...off.news, ...news].slice(0, 50) });
         maybeOpenMercato(get, set);
       },
 
@@ -305,25 +333,41 @@ export const useGame = create<GameState>()(
         if (!league) return;
         const total = totalMatchdays(league.clubs.length);
         let guard = 0;
+        let collected: NewsItem[] = get().news;
         while (league.status === "season" && guard < total + 2) {
           guard++;
           league = playOneMatchday(league);
+          const off = applyOffPitch(league);
+          league = off.league;
+          collected = [...off.news, ...collected].slice(0, 50);
           // Honour the mercato pause even in rapide mode.
           const half = Math.floor(total / 2);
           if (!get().mercatoDone && league.currentMatchday > half) {
-            set({ league });
+            set({ league, news: collected });
             maybeOpenMercato(get, set);
             return;
           }
         }
-        set({ league });
+        set({ league, news: collected });
       },
 
       resumeFromMercato: () => {
-        const { league } = get();
+        const { league, news } = get();
         if (!league) return;
-        // Recompute human lineup in case a trade changed the squad.
-        const clubs = league.clubs.map((c) =>
+        // Wantaway players who were not traded leave (direction Fenerbahce).
+        const rng = new Rng(`${league.id}-fener-${league.currentMatchday}`);
+        const fresh: NewsItem[] = [];
+        let clubs = league.clubs.map((c) => {
+          if (!c.wantaway) return c;
+          const out = resolveWantaway(c, rng, league.currentMatchday);
+          if (out) {
+            if (isRealNews(out.news)) fresh.push(out.news);
+            return out.club;
+          }
+          return c;
+        });
+        // Recompute human lineup in case a trade/departure changed the squad.
+        clubs = clubs.map((c) =>
           c.id === HUMAN_CLUB_ID
             ? { ...c, lineup: autoLineup(c.squad, c.formation) }
             : c
@@ -331,6 +375,7 @@ export const useGame = create<GameState>()(
         set({
           league: { ...league, clubs, status: "season" },
           offers: [],
+          news: [...fresh, ...news].slice(0, 50),
         });
       },
 
@@ -399,7 +444,13 @@ export const useGame = create<GameState>()(
         // Keep squads & collections; reset the competition (new calendar,
         // fresh form). Human re-composes, the loop returns to Composition.
         const clubs = league.clubs.map((c) => {
-          const reset = { ...c, form: 0 };
+          const reset: Club = {
+            ...c,
+            form: 0,
+            pointsPenalty: 0,
+            forfeitNext: false,
+            wantaway: undefined,
+          };
           return c.isAI
             ? refreshAiLineup(reset)
             : { ...reset, lineup: autoLineup(c.squad, c.formation) };
@@ -418,6 +469,7 @@ export const useGame = create<GameState>()(
           palmares: [...palmares, entry],
           mercatoDone: false,
           offers: [],
+          news: [],
         });
       },
 
@@ -430,6 +482,8 @@ export const useGame = create<GameState>()(
           offers: [],
           seasonNumber: 1,
           palmares: [],
+          rerollsLeft: 0,
+          news: [],
         }),
 
       standings: () => {
@@ -457,6 +511,32 @@ function playOneMatchday(league: League): League {
     const home = clubsById.get(f.homeClubId);
     const away = clubsById.get(f.awayClubId);
     if (!home || !away) return f;
+
+    // Greve du bus : un club en forfait perd sur tapis vert (0-3).
+    const homeForfeit = home.forfeitNext;
+    const awayForfeit = away.forfeitNext;
+    if (homeForfeit || awayForfeit) {
+      home.forfeitNext = false;
+      away.forfeitNext = false;
+      const homeScore = homeForfeit ? 0 : 3;
+      const awayScore = awayForfeit ? 0 : 3;
+      const guilty = homeForfeit ? home : away;
+      return {
+        ...f,
+        homeScore,
+        awayScore,
+        status: "played" as const,
+        events: [
+          {
+            minute: 0,
+            type: "narrative" as const,
+            clubId: guilty.id,
+            description: `Forfait de ${guilty.name} : les joueurs ne sont jamais descendus du bus. Match perdu sur tapis vert.`,
+          },
+        ],
+      };
+    }
+
     const result = simulateFixture(home, away, {
       matchday: md,
       totalMatchdays: total,
@@ -481,6 +561,39 @@ function playOneMatchday(league: League): League {
     fixtures,
     currentMatchday: nextMd,
     status,
+  };
+}
+
+/**
+ * Roll the "faits divers" for the matchday that was just played. Up to two
+ * incidents per matchday, applied to club copies, returning the new news.
+ */
+function applyOffPitch(league: League): { league: League; news: NewsItem[] } {
+  const md = league.currentMatchday - 1;
+  if (md < 1) return { league, news: [] };
+
+  const rng = new Rng(`${league.id}-news-${md}`);
+  const order = rng.shuffle(league.clubs.map((c) => c.id));
+  const clubsById = new Map(league.clubs.map((c) => [c.id, c]));
+  const fresh: NewsItem[] = [];
+  let applied = 0;
+
+  for (const id of order) {
+    if (applied >= 2) break;
+    const club = clubsById.get(id);
+    if (!club) continue;
+    const outcome = rollOffPitch(club, rng, md, 0.14);
+    if (outcome) {
+      clubsById.set(id, outcome.club);
+      fresh.push(outcome.news);
+      applied++;
+    }
+  }
+
+  if (fresh.length === 0) return { league, news: [] };
+  return {
+    league: { ...league, clubs: [...clubsById.values()] },
+    news: fresh,
   };
 }
 

@@ -12,6 +12,7 @@ export function Draft() {
   const pick = useGame((s) => s.pickHumanPlayer);
   const skip = useGame((s) => s.skipDraw);
   const human = useGame((s) => s.humanClub());
+  const rerollsLeft = useGame((s) => s.rerollsLeft);
 
   const squad = human?.squad ?? [];
   const owned = new Set(squad);
@@ -91,14 +92,20 @@ export function Draft() {
             })}
           </div>
 
-          <button
-            type="button"
-            onClick={skip}
-            className="retro-btn mt-5 text-xs"
-            title="Relancer un tirage (vous perdez ce tirage)"
-          >
-            ↻ Nouveau tirage
-          </button>
+          {rerollsLeft > 0 ? (
+            <button
+              type="button"
+              onClick={skip}
+              className="retro-btn mt-5 text-xs"
+              title="Relancer un tirage (consomme un reroll)"
+            >
+              ↻ Nouveau tirage ({rerollsLeft})
+            </button>
+          ) : (
+            <p className="mt-5 text-xs text-ink/50 italic">
+              Mode normal : pas de reroll. Le hasard fait la loi.
+            </p>
+          )}
         </motion.section>
 
         <aside className="retro-card p-4 h-fit lg:sticky lg:top-4">

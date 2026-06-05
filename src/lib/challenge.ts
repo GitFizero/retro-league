@@ -62,15 +62,22 @@ export interface ChallengeResult {
   highlight?: { fixture: Fixture; home: MiniClub; away: MiniClub };
 }
 
+export type Difficulty = "normal" | "easy";
+export const CHALLENGE_REROLLS: Record<Difficulty, number> = {
+  normal: 0,
+  easy: 3,
+};
+
 interface ChallengeState {
   phase: "idle" | "draft" | "result";
   teamName: string;
   xi: string[];
   draw: DraftDraw | null;
   seed: number;
+  rerollsLeft: number;
   result: ChallengeResult | null;
 
-  start: (teamName: string) => void;
+  start: (teamName: string, difficulty?: Difficulty) => void;
   pick: (playerId: string) => void;
   spin: () => void;
   undo: () => void;
@@ -81,7 +88,13 @@ interface ChallengeState {
 let drawCounter = 0;
 
 function nextDraw(seed: number, owned: Set<string>): DraftDraw {
-  return makeHumanDraw(new Rng(seed + drawCounter++), CHALLENGE_DEPTH, owned);
+  // Always offer at least one pickable player (free re-draw if all owned).
+  let draw = makeHumanDraw(new Rng(seed + drawCounter++), CHALLENGE_DEPTH, owned);
+  for (let i = 0; i < 12; i++) {
+    if (draw.players.some((p) => !owned.has(p.id))) break;
+    draw = makeHumanDraw(new Rng(seed + drawCounter++), CHALLENGE_DEPTH, owned);
+  }
+  return draw;
 }
 
 function buildAiClubs(seed: number): Club[] {
@@ -114,15 +127,17 @@ export const useChallenge = create<ChallengeState>()(
       xi: [],
       draw: null,
       seed: 0,
+      rerollsLeft: 0,
       result: null,
 
-      start: (teamName) => {
+      start: (teamName, difficulty = "normal") => {
         const seed = Math.floor(Math.random() * 1e9);
         set({
           phase: "draft",
           teamName: teamName.trim() || "Mon XI Retro",
           xi: [],
           seed,
+          rerollsLeft: CHALLENGE_REROLLS[difficulty],
           result: null,
           draw: nextDraw(seed, new Set()),
         });
@@ -143,15 +158,20 @@ export const useChallenge = create<ChallengeState>()(
       },
 
       spin: () => {
-        const { xi, seed } = get();
-        set({ draw: nextDraw(seed, new Set(xi)) });
+        const { xi, seed, rerollsLeft } = get();
+        if (rerollsLeft <= 0) return; // mode normal : pas de reroll
+        set({ rerollsLeft: rerollsLeft - 1, draw: nextDraw(seed, new Set(xi)) });
       },
 
       undo: () => {
-        const { xi, seed } = get();
-        if (xi.length === 0) return;
+        const { xi, seed, rerollsLeft } = get();
+        if (xi.length === 0 || rerollsLeft <= 0) return;
         const next = xi.slice(0, -1);
-        set({ xi: next, draw: nextDraw(seed, new Set(next)) });
+        set({
+          rerollsLeft: rerollsLeft - 1,
+          xi: next,
+          draw: nextDraw(seed, new Set(next)),
+        });
       },
 
       run: () => {
