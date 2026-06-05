@@ -87,13 +87,20 @@ Le moteur (`src/lib/engine`) ne dépend ni de React ni du navigateur : il est
 côté client »). Voir [`docs/PRD-MAPPING.md`](docs/PRD-MAPPING.md) pour la
 correspondance détaillée PRD ↔ code et le plan de portage vers Supabase.
 
+## Déploiement
+
+L'app est exportée en **site statique** (`npm run build` → `out/`) : elle se
+déploie partout (Cloudflare `wrangler deploy`, GitHub Pages, Vercel) sans
+runtime serveur. Voir [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
 ## Backend multijoueur (Supabase)
 
-Le jeu solo tourne sans backend. Un socle Supabase **prêt à déployer** est
-fourni : schéma + RLS (`supabase/migrations`), seed de contenu généré depuis la
-Content Bible (`npm run seed:gen`), clients typés et **API serveur qui exécute
-le moteur** (les simulations ne tournent jamais côté client). Voir
-[`docs/SUPABASE.md`](docs/SUPABASE.md).
+Le jeu tourne 100 % côté navigateur. Un socle Supabase **prêt à déployer** est
+fourni pour le multijoueur : schéma + RLS (`supabase/migrations`), seed généré
+depuis la Content Bible (`npm run seed:gen`), clients typés et une API serveur
+qui réutilise le moteur (les simulations ne tournent jamais côté client). Ces
+routes sont conservées dans `src/server/api/` (hors build statique) jusqu'à
+l'activation d'une vraie instance Supabase. Voir [`docs/SUPABASE.md`](docs/SUPABASE.md).
 
 ## Propriété intellectuelle
 

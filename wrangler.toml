@@ -1,9 +1,17 @@
-# Cloudflare Pages — Retro League (via @cloudflare/next-on-pages).
-# IMPORTANT : c'est un projet *Pages*, pas un Worker classique.
-#   - Build  : npx @cloudflare/next-on-pages@1
-#   - Deploy : npx wrangler pages deploy   (PAS `wrangler deploy`)
+# Cloudflare — Retro League est exporte en site STATIQUE (dossier `out/`).
+# Deploiement via les "Workers static assets" : `wrangler deploy` sert
+# directement le dossier out/ (plus besoin d'adaptateur Next).
+#
+#   Build  : npm run build      (genere out/)
+#   Deploy : npx wrangler deploy
 name = "retro-league"
-pages_build_output_dir = ".vercel/output/static"
-compatibility_date = "2024-11-01"
-# Requis : le bundle des routes API (Supabase) utilise des APIs Node.
-compatibility_flags = ["nodejs_compat"]
+compatibility_date = "2024-12-30"
+
+# Genere out/ avant le deploiement (utile si la build command n'est pas
+# configuree dans le dashboard Cloudflare).
+[build]
+command = "npm run build"
+
+[assets]
+directory = "./out"
+not_found_handling = "single-page-application"

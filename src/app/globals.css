@@ -51,6 +51,34 @@
     @apply bg-gold text-ink border-ink hover:bg-gold-light;
   }
 
+  /* Vignette Panini : foil dore pour les cracks, brillance papier. */
+  .panini {
+    position: relative;
+    background:
+      linear-gradient(160deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 38%),
+      #faf7ef;
+  }
+  .panini-foil {
+    background:
+      linear-gradient(
+        115deg,
+        #e7cf8e 0%,
+        #fbf6e6 22%,
+        #c9a64d 46%,
+        #fff8e6 64%,
+        #d9b75e 100%
+      );
+  }
+  .panini-stripe {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    border-top-left-radius: 2px;
+    border-bottom-left-radius: 2px;
+  }
+
   .stamp {
     @apply inline-block font-display font-extrabold uppercase tracking-widest
       border-4 border-retro text-retro px-3 py-1 rounded

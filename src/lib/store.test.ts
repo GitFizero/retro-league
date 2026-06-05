@@ -69,10 +69,12 @@ describe("game store — full loop & multi-season", () => {
       difficulty: "normal",
     });
     autoDraft();
-    const squadBefore = useGame.getState().humanClub()!.squad;
     useGame.getState().startSeason();
     playToEnd();
 
+    // Squad as it stands at season's end (off-pitch events may have swapped a
+    // player for a youth) must carry over unchanged into the next season.
+    const squadBefore = useGame.getState().humanClub()!.squad;
     expect(useGame.getState().seasonNumber).toBe(1);
     useGame.getState().nextSeason();
 

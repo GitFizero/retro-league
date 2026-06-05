@@ -1,67 +1,50 @@
 # Déploiement
 
-Retro League est une app **Next.js** : le jeu (solo + Mode Défi) tourne dans le
-navigateur, mais le projet contient aussi des **routes serveur** (`/api/*`
-Supabase). Ce n'est donc **ni un site statique pur, ni un Worker brut** — d'où
-l'échec de `npx wrangler deploy` (« Could not detect a directory containing
-static files »). Il faut un hébergeur Next.js ou l'adaptateur Cloudflare.
+Retro League est exporté en **site statique** (`output: "export"` → dossier
+`out/`). Le jeu (solo, Mode Défi, ligues, faits divers) tourne 100 % dans le
+navigateur, donc **aucun runtime serveur n'est requis**. Ça se déploie partout :
+Cloudflare, GitHub Pages, Vercel, n'importe quel CDN.
 
-## Option A — Vercel (le plus simple, recommandé par le PRD)
+```bash
+npm run build      # genere out/
+```
 
-Zéro configuration : Vercel détecte Next.js automatiquement.
+## Cloudflare (avec ta commande actuelle `wrangler deploy`)
 
-1. Importer le repo GitHub sur vercel.com.
-2. Ajouter les variables d'env (cf. `.env.example`) si on active Supabase.
-3. Deploy. C'est tout.
+Grâce aux **Workers static assets**, `wrangler deploy` sert directement `out/`
+(c'est ce qui réglait l'erreur « Could not detect a directory containing static
+files » : il manquait le dossier statique + la config `[assets]`, désormais dans
+`wrangler.toml`).
 
-## Option B — Cloudflare Pages (l'app complète, API comprise)
-
-On utilise l'adaptateur officiel `@cloudflare/next-on-pages` (déjà installé).
-Il produit un dossier statique + des Edge Functions pour les routes `/api/*`.
-**Validé** : `npm run pages:build` génère bien `.vercel/output/static`.
-
-⚠️ C'est un projet **Pages**, donc la commande de déploiement est
-`wrangler pages deploy` — **pas** `wrangler deploy` (qui, lui, vise un Worker
-classique et cherche des fichiers statiques → l'erreur que tu as eue).
-
-### Réglages du projet Cloudflare Pages (dashboard)
+Réglages du projet Cloudflare :
 
 | Réglage | Valeur |
 |---|---|
-| Framework preset | Next.js |
-| Build command | `npx @cloudflare/next-on-pages@1` |
-| Build output directory | `.vercel/output/static` |
-| Compatibility flags | `nodejs_compat` |
-| Compatibility date | `2024-11-01` (ou plus récent) |
+| Build command | `npm run build` |
+| Deploy command | `npx wrangler deploy` |
+| (rien d'autre) | `wrangler.toml` pointe `[assets] directory = "./out"` |
 
-Ces deux derniers points sont aussi fixés dans `wrangler.toml`.
+En local : `npm run deploy` (= `next build && wrangler deploy`).
 
-### Déploiement en ligne de commande
+> Si tu utilises plutôt **Cloudflare Pages** (intégration Git) : Build command
+> `npm run build`, Build output directory `out`. Pas besoin de `wrangler`.
 
-```bash
-npm run pages:build          # = npx @cloudflare/next-on-pages@1
-npx wrangler pages deploy    # lit wrangler.toml (pages_build_output_dir)
-# ou en une fois :
-npm run pages:deploy
-```
+## GitHub Pages
 
-### Si tu avais configuré un Worker (commande `wrangler deploy`)
+Build `npm run build`, publie le dossier `out/` (ex. action
+`actions/upload-pages-artifact` sur `out`). Site 100 % statique.
 
-Change le **type de projet** en *Pages*, ou remplace la commande de déploiement
-par `npx wrangler pages deploy .vercel/output/static`. `wrangler deploy` (Worker)
-ne convient pas à une app Next.js.
+## Vercel
 
-### Variables d'environnement (seulement si Supabase activé)
+Import du repo → détection Next.js automatique. (Vercel sert aussi très bien
+l'export statique.)
 
-Dans Pages → Settings → Environment variables :
-`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
-`SUPABASE_SERVICE_ROLE_KEY` (cf. `.env.example`). Le jeu solo + Mode Défi
-fonctionne **sans** ces variables.
+## Backend Supabase (multijoueur, plus tard)
 
-## Option C — Statique seul (jeu uniquement, sans backend)
-
-Le jeu est 100 % client. Si on veut un déploiement purement statique (sans les
-routes `/api/*`), il faudrait retirer le dossier `src/app/api` et activer
-`output: "export"` dans `next.config.mjs`. Non retenu par défaut pour garder le
-backend dans le repo, mais c'est l'option la plus légère si le multijoueur n'est
-pas encore branché.
+Les routes serveur de l'API multijoueur ont été déplacées hors du build statique
+dans `src/server/api/` (voir `src/server/README.md`) : elles sont conservées
+comme référence mais ne sont pas déployées tant qu'on n'a pas branché une vraie
+instance Supabase + un hôte serveur. Le schéma, le seed et les clients restent
+dans `supabase/` et `src/lib/supabase/`. Pour activer le multijoueur, on
+redéploiera sur un hôte serveur (Vercel, ou Cloudflare via l'adaptateur OpenNext)
+en réintégrant ces routes sous `src/app/api/`.

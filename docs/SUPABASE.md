@@ -34,8 +34,8 @@ Navigateur ──(lecture RLS / realtime)──► Supabase Postgres
 | Types de la base | `src/lib/supabase/database.types.ts` |
 | Clients (navigateur / serveur / admin) | `src/lib/supabase/{client,server,admin}.ts` |
 | Repository (moteur ↔ base) | `src/lib/supabase/repository.ts` |
-| API : ligues | `src/app/api/leagues/route.ts` |
-| API : simuler une journée | `src/app/api/leagues/[id]/matchday/route.ts` |
+| API : ligues | `src/server/api/leagues/route.ts` |
+| API : simuler une journée | `src/server/api/leagues/[id]/matchday/route.ts` |
 
 ## Étapes
 

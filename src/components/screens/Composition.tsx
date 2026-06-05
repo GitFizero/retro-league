@@ -109,7 +109,7 @@ export function Composition() {
                         onClick={() =>
                           setSelectedStarter(active ? null : e.playerId)
                         }
-                        className={`retro-card px-2 py-1.5 text-center w-24 transition ${
+                        className={`panini retro-card px-1.5 py-1.5 text-center w-[4.5rem] sm:w-24 transition ${
                           active ? "ring-4 ring-gold" : ""
                         }`}
                       >
