@@ -2,8 +2,8 @@
  * Retro League — domain model.
  * Mirrors the data model of PRD Tome 2 (section 3) but typed for the
  * client-side playable engine. Every historical player version is a distinct
- * entity (Tome 2, section 4 — "Modele Sofifa"): Mbappe Monaco 2017 and
- * Mbappe PSG 2019 are two different `Player`s with two `playerVersionId`s.
+ * entity (Tome 2, section 4 — "versioning par saison"): Mbappe Monaco 2017 and
+ * Mbappe Paris 2019 are two different `Player`s with two `playerVersionId`s.
  */
 
 /** Positions, French abbreviations as used throughout the PRD. */
@@ -52,7 +52,7 @@ export interface HistoricalTeam {
   id: string;
   clubName: string;
   season: string;
-  fifaVersion: FifaVersion;
+  era: Era;
   league: string;
   coach: string;
   finalPosition: number;
@@ -63,24 +63,28 @@ export interface HistoricalTeam {
   mythicTag?: string;
 }
 
-export type FifaVersion =
-  | "FC26"
-  | "FIFA20"
-  | "FIFA15"
-  | "FIFA10"
-  | "FIFA07";
+/**
+ * Neutral "era" buckets, by season start-year band. These are our own
+ * identifiers (no third-party branding) used to gate the historical depth.
+ */
+export type Era =
+  | "MODERNE" // saison actuelle
+  | "E2015" // 2014-2019
+  | "E2010" // 2010-2013
+  | "E2007" // 2006-2009
+  | "E2003"; // 2002-2005
 
 /** Historical depth selectable at league creation (Tome 1, section 9). */
 export type HistoricalDepth =
-  | "FC26"
-  | "FC26_FIFA20"
-  | "FC26_FIFA15"
-  | "FC26_FIFA10"
-  | "FC26_FIFA07";
+  | "MODERNE"
+  | "DEPUIS_2015"
+  | "DEPUIS_2010"
+  | "DEPUIS_2007"
+  | "TOUTE_HISTOIRE";
 
 /** A distinct historical version of a player. */
 export interface Player {
-  /** Unique version id, e.g. "JUNINHO_OL_2007". */
+  /** Unique version id, e.g. "JUNINHO_LYON_2007". */
   id: string;
   name: string;
   position: Position;
@@ -94,7 +98,7 @@ export interface Player {
   historicalTeamId: string;
   club: string;
   season: string;
-  fifaVersion: FifaVersion;
+  era: Era;
 }
 
 export type AiPersonality =

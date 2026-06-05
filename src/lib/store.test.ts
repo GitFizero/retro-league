@@ -42,7 +42,7 @@ describe("game store — full loop & multi-season", () => {
       clubName: "Mon Club",
       clubCount: 6,
       simulationMode: "rapide",
-      historicalDepth: "FC26_FIFA07",
+      historicalDepth: "TOUTE_HISTOIRE",
     });
     expect(useGame.getState().league?.status).toBe("draft");
 
@@ -64,7 +64,7 @@ describe("game store — full loop & multi-season", () => {
       clubName: "Mon Club",
       clubCount: 4,
       simulationMode: "rapide",
-      historicalDepth: "FC26_FIFA10",
+      historicalDepth: "DEPUIS_2007",
     });
     autoDraft();
     const squadBefore = useGame.getState().humanClub()!.squad;
@@ -92,7 +92,7 @@ describe("game store — full loop & multi-season", () => {
       clubName: "Mon Club",
       clubCount: 4,
       simulationMode: "rapide",
-      historicalDepth: "FC26_FIFA07",
+      historicalDepth: "TOUTE_HISTOIRE",
     });
     autoDraft();
     const before = useGame.getState();

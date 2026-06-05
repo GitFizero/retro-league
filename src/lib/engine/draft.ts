@@ -7,7 +7,7 @@ import { SIM_LINE_OF } from "@/lib/engine/positions";
 import type { Rng } from "@/lib/engine/rng";
 import type {
   AiPersonality,
-  FifaVersion,
+  Era,
   HistoricalDepth,
   HistoricalTeam,
   Line,
@@ -22,23 +22,17 @@ import type {
  *  souvenirs."
  */
 
-const DEPTH_ORDER: FifaVersion[] = [
-  "FC26",
-  "FIFA20",
-  "FIFA15",
-  "FIFA10",
-  "FIFA07",
-];
+const DEPTH_ORDER: Era[] = ["MODERNE", "E2015", "E2010", "E2007", "E2003"];
 
-const DEPTH_TO_DEEPEST: Record<HistoricalDepth, FifaVersion> = {
-  FC26: "FC26",
-  FC26_FIFA20: "FIFA20",
-  FC26_FIFA15: "FIFA15",
-  FC26_FIFA10: "FIFA10",
-  FC26_FIFA07: "FIFA07",
+const DEPTH_TO_DEEPEST: Record<HistoricalDepth, Era> = {
+  MODERNE: "MODERNE",
+  DEPUIS_2015: "E2015",
+  DEPUIS_2010: "E2010",
+  DEPUIS_2007: "E2007",
+  TOUTE_HISTOIRE: "E2003",
 };
 
-export function versionsForDepth(depth: HistoricalDepth): FifaVersion[] {
+export function versionsForDepth(depth: HistoricalDepth): Era[] {
   const deepest = DEPTH_TO_DEEPEST[depth];
   const maxIndex = DEPTH_ORDER.indexOf(deepest);
   return DEPTH_ORDER.slice(0, maxIndex + 1);
@@ -46,7 +40,7 @@ export function versionsForDepth(depth: HistoricalDepth): FifaVersion[] {
 
 export function teamsForDepth(depth: HistoricalDepth): HistoricalTeam[] {
   const allowed = new Set(versionsForDepth(depth));
-  const teams = HISTORICAL_TEAMS.filter((t) => allowed.has(t.fifaVersion));
+  const teams = HISTORICAL_TEAMS.filter((t) => allowed.has(t.era));
   // Fallback: if a depth excludes every seeded team, return everything so the
   // draft is never empty in the MVP content set.
   return teams.length > 0 ? teams : HISTORICAL_TEAMS;

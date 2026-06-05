@@ -22,7 +22,7 @@ function clubFromSquad(id: string, squad: string[]): Club {
 
 function makeClub(id: string, seed: string): Club {
   const rng = new Rng(seed);
-  const squad = aiDraftSquad(rng, "FC26_FIFA07", "equilibree");
+  const squad = aiDraftSquad(rng, "TOUTE_HISTOIRE", "equilibree");
   const formation = bestFormationFor(squad);
   return {
     id,

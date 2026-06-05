@@ -240,7 +240,7 @@ export const RIVALRIES: Rivalry[] = [
     a: "Lyon",
     b: "Marseille",
     intensity: 1.15,
-    narration: "OL contre OM : le sommet du championnat se joue ce soir.",
+    narration: "Lyon contre Marseille : le sommet du championnat se joue ce soir.",
   },
 ];
 

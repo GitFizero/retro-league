@@ -6,11 +6,11 @@ import { useGame } from "@/lib/store";
 import type { HistoricalDepth, SimulationMode } from "@/lib/types";
 
 const DEPTHS: { value: HistoricalDepth; label: string }[] = [
-  { value: "FC26", label: "FC26 uniquement" },
-  { value: "FC26_FIFA20", label: "FC26 → FIFA20" },
-  { value: "FC26_FIFA15", label: "FC26 → FIFA15" },
-  { value: "FC26_FIFA10", label: "FC26 → FIFA10" },
-  { value: "FC26_FIFA07", label: "FC26 → FIFA07 (toute l'histoire)" },
+  { value: "MODERNE", label: "Epoque actuelle" },
+  { value: "DEPUIS_2015", label: "Depuis 2015" },
+  { value: "DEPUIS_2010", label: "Depuis 2010" },
+  { value: "DEPUIS_2007", label: "Depuis 2007" },
+  { value: "TOUTE_HISTOIRE", label: "Toute l'histoire (depuis 2002)" },
 ];
 
 export function Home() {
@@ -19,7 +19,7 @@ export function Home() {
   const [clubName, setClubName] = useState("Mon Club");
   const [clubCount, setClubCount] = useState(8);
   const [mode, setMode] = useState<SimulationMode>("rapide");
-  const [depth, setDepth] = useState<HistoricalDepth>("FC26_FIFA07");
+  const [depth, setDepth] = useState<HistoricalDepth>("TOUTE_HISTOIRE");
 
   return (
     <Shell>

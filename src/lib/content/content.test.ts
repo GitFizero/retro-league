@@ -14,7 +14,7 @@ describe("content bible integrity", () => {
     expect(ALL_PLAYERS.length).toBeGreaterThanOrEqual(250);
   });
 
-  it("gives every player a unique version id (Modele Sofifa)", () => {
+  it("gives every player a unique version id (versioning par saison)", () => {
     expect(PLAYERS_BY_ID.size).toBe(ALL_PLAYERS.length);
   });
 
@@ -49,7 +49,7 @@ describe("content bible integrity", () => {
 
   it("keeps two distinct versions of Mbappe-style multi-season players", () => {
     const marseille = HISTORICAL_TEAMS.filter(
-      (t) => t.clubName === "Olympique de Marseille"
+      (t) => t.clubName === "Marseille"
     );
     expect(marseille.length).toBeGreaterThanOrEqual(2);
   });

@@ -20,7 +20,7 @@ export const AI_NAMES = [
   "Vintage United",
   "Old School CF",
   "FC Madeleine de Proust",
-  "Panini All-Stars",
+  "Album All-Stars",
   "Les Increvables",
   "Dynamo Memoire",
   "Atletico Cassette",

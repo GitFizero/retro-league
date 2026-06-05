@@ -1,9 +1,4 @@
-import type {
-  FifaVersion,
-  HistoricalTeam,
-  Player,
-  Position,
-} from "@/lib/types";
+import type { Era, HistoricalTeam, Player, Position } from "@/lib/types";
 
 /**
  * THE CONTENT BIBLE (PRD Tome 3).
@@ -13,7 +8,11 @@ import type {
  *
  * Each entry is a historical club-season with its iconic squad. Ratings are
  * period-accurate approximations. Every player is a distinct version
- * (Modele Sofifa, Tome 2 section 4): the id encodes club + season.
+ * (per-season versioning, Tome 2 section 4): the id encodes club + season.
+ *
+ * IP NOTE: clubs are referenced by CITY name only (no registered club marks),
+ * no crests, no kits, no photos. Player names are factual references; see
+ * docs/LEGAL-IP.md for the licensing posture and the name-display toggle.
  */
 
 interface RawPlayer {
@@ -29,7 +28,7 @@ interface RawPlayer {
 interface RawTeam {
   club: string;
   season: string; // e.g. "2007-08"
-  fifa: FifaVersion;
+  era: Era;
   league: string;
   coach: string;
   finalPosition: number;
@@ -61,7 +60,7 @@ function expand(raw: RawTeam): { team: HistoricalTeam; players: Player[] } {
     id: teamId,
     clubName: raw.club,
     season: raw.season,
-    fifaVersion: raw.fifa,
+    era: raw.era,
     league: raw.league,
     coach: raw.coach,
     finalPosition: raw.finalPosition,
@@ -87,7 +86,7 @@ function expand(raw: RawTeam): { team: HistoricalTeam; players: Player[] } {
       historicalTeamId: teamId,
       club: raw.club,
       season: raw.season,
-      fifaVersion: raw.fifa,
+      era: raw.era,
     };
   });
 
@@ -96,15 +95,15 @@ function expand(raw: RawTeam): { team: HistoricalTeam; players: Player[] } {
 
 const RAW_TEAMS: RawTeam[] = [
   {
-    club: "Olympique Lyonnais",
+    club: "Lyon",
     season: "2007-08",
-    fifa: "FIFA10",
-    league: "Ligue 1",
+    era: "E2007",
+    league: "Championnat de France",
     coach: "Alain Perrin",
     finalPosition: 1,
     points: 79,
     description:
-      "Septieme titre consecutif. L'OL regne encore sans partage sur la Ligue 1.",
+      "Septieme titre consecutif. Lyon regne encore sans partage sur le championnat.",
     mythicTag: "DYNASTIE",
     players: [
       { n: "Gregory Coupet", p: "G", o: 86, a: 35, nat: "France" },
@@ -124,15 +123,15 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "Girondins de Bordeaux",
+    club: "Bordeaux",
     season: "2008-09",
-    fifa: "FIFA10",
-    league: "Ligue 1",
+    era: "E2007",
+    league: "Championnat de France",
     coach: "Laurent Blanc",
     finalPosition: 1,
     points: 80,
     description:
-      "Les Girondins deroulent leur football comme au printemps 2009. Champions.",
+      "Bordeaux deroule son football comme au printemps 2009. Champions.",
     mythicTag: "DOMINATION",
     players: [
       { n: "Ulrich Rame", p: "G", o: 80, a: 36, nat: "France" },
@@ -150,10 +149,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "Olympique de Marseille",
+    club: "Marseille",
     season: "2009-10",
-    fifa: "FIFA10",
-    league: "Ligue 1",
+    era: "E2007",
+    league: "Championnat de France",
     coach: "Didier Deschamps",
     finalPosition: 1,
     points: 78,
@@ -175,10 +174,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "Olympique de Marseille",
+    club: "Marseille",
     season: "2017-18",
-    fifa: "FIFA20",
-    league: "Ligue 1",
+    era: "E2015",
+    league: "Championnat de France",
     coach: "Rudi Garcia",
     finalPosition: 4,
     points: 77,
@@ -201,10 +200,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "AS Monaco",
+    club: "Monaco",
     season: "2016-17",
-    fifa: "FIFA20",
-    league: "Ligue 1",
+    era: "E2015",
+    league: "Championnat de France",
     coach: "Leonardo Jardim",
     finalPosition: 1,
     points: 95,
@@ -229,10 +228,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "LOSC Lille",
+    club: "Lille",
     season: "2010-11",
-    fifa: "FIFA15",
-    league: "Ligue 1",
+    era: "E2010",
+    league: "Championnat de France",
     coach: "Rudi Garcia",
     finalPosition: 1,
     points: 76,
@@ -255,10 +254,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "Montpellier HSC",
+    club: "Montpellier",
     season: "2011-12",
-    fifa: "FIFA15",
-    league: "Ligue 1",
+    era: "E2010",
+    league: "Championnat de France",
     coach: "Rene Girard",
     finalPosition: 1,
     points: 82,
@@ -282,10 +281,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "Paris Saint-Germain",
+    club: "Paris",
     season: "2015-16",
-    fifa: "FIFA20",
-    league: "Ligue 1",
+    era: "E2015",
+    league: "Championnat de France",
     coach: "Laurent Blanc",
     finalPosition: 1,
     points: 96,
@@ -310,10 +309,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "OGC Nice",
+    club: "Nice",
     season: "2015-16",
-    fifa: "FIFA20",
-    league: "Ligue 1",
+    era: "E2015",
+    league: "Championnat de France",
     coach: "Claude Puel",
     finalPosition: 4,
     points: 63,
@@ -335,10 +334,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "Olympique de Marseille",
+    club: "Marseille",
     season: "2003-04",
-    fifa: "FIFA07",
-    league: "Ligue 1",
+    era: "E2003",
+    league: "Championnat de France",
     coach: "Jose Anigo",
     finalPosition: 7,
     points: 56,
@@ -360,15 +359,15 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "Paris Saint-Germain",
+    club: "Paris",
     season: "2006-07",
-    fifa: "FIFA07",
-    league: "Ligue 1",
+    era: "E2003",
+    league: "Championnat de France",
     coach: "Guy Lacombe",
     finalPosition: 15,
     points: 47,
     description:
-      "Une occasion suffit a Pauleta. Le Portugais porte un PSG en crise.",
+      "Une occasion suffit a Pauleta. Le Portugais porte un Paris en crise.",
     players: [
       { n: "Mickael Landreau", p: "G", o: 80, a: 27, nat: "France" },
       { n: "Bernard Mendy", p: "DD", o: 73, a: 25, nat: "France" },
@@ -385,10 +384,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "AS Saint-Etienne",
+    club: "Saint-Etienne",
     season: "2012-13",
-    fifa: "FIFA15",
-    league: "Ligue 1",
+    era: "E2010",
+    league: "Championnat de France",
     coach: "Christophe Galtier",
     finalPosition: 5,
     points: 63,
@@ -410,10 +409,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "RC Lens",
+    club: "Lens",
     season: "2006-07",
-    fifa: "FIFA07",
-    league: "Ligue 1",
+    era: "E2003",
+    league: "Championnat de France",
     coach: "Francis Gillot",
     finalPosition: 5,
     points: 57,
@@ -435,15 +434,15 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "Olympique Lyonnais",
+    club: "Lyon",
     season: "2006-07",
-    fifa: "FIFA07",
-    league: "Ligue 1",
+    era: "E2003",
+    league: "Championnat de France",
     coach: "Gerard Houllier",
     finalPosition: 1,
     points: 81,
     description:
-      "Sixieme titre d'affilee. L'OL galactique de Juninho, Malouda et un certain Benzema.",
+      "Sixieme titre d'affilee. Le Lyon galactique de Juninho, Malouda et un certain Benzema.",
     mythicTag: "DYNASTIE",
     players: [
       { n: "Gregory Coupet", p: "G", o: 86, a: 34, nat: "France" },
@@ -463,10 +462,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "AS Monaco",
+    club: "Monaco",
     season: "2003-04",
-    fifa: "FIFA07",
-    league: "Ligue 1",
+    era: "E2003",
+    league: "Championnat de France",
     coach: "Didier Deschamps",
     finalPosition: 3,
     points: 75,
@@ -490,10 +489,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "Paris Saint-Germain",
+    club: "Paris",
     season: "2002-03",
-    fifa: "FIFA07",
-    league: "Ligue 1",
+    era: "E2003",
+    league: "Championnat de France",
     coach: "Luis Fernandez",
     finalPosition: 11,
     points: 47,
@@ -516,10 +515,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "FC Sochaux",
+    club: "Sochaux",
     season: "2003-04",
-    fifa: "FIFA07",
-    league: "Ligue 1",
+    era: "E2003",
+    league: "Championnat de France",
     coach: "Guy Lacombe",
     finalPosition: 5,
     points: 60,
@@ -541,10 +540,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "Olympique Lyonnais",
+    club: "Lyon",
     season: "2010-11",
-    fifa: "FIFA15",
-    league: "Ligue 1",
+    era: "E2010",
+    league: "Championnat de France",
     coach: "Claude Puel",
     finalPosition: 3,
     points: 64,
@@ -568,10 +567,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "Paris Saint-Germain",
+    club: "Paris",
     season: "2010-11",
-    fifa: "FIFA10",
-    league: "Ligue 1",
+    era: "E2007",
+    league: "Championnat de France",
     coach: "Antoine Kombouare",
     finalPosition: 4,
     points: 60,
@@ -595,10 +594,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "AS Saint-Etienne",
+    club: "Saint-Etienne",
     season: "2008-09",
-    fifa: "FIFA10",
-    league: "Ligue 1",
+    era: "E2007",
+    league: "Championnat de France",
     coach: "Alain Perrin",
     finalPosition: 17,
     points: 41,
@@ -620,15 +619,15 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "Olympique de Marseille",
+    club: "Marseille",
     season: "2011-12",
-    fifa: "FIFA15",
-    league: "Ligue 1",
+    era: "E2010",
+    league: "Championnat de France",
     coach: "Didier Deschamps",
     finalPosition: 10,
     points: 52,
     description:
-      "Le Velodrome vibre pour Valbuena et Gignac. Une saison en dents de scie mais tellement OM.",
+      "Le Velodrome vibre pour Valbuena et Gignac. Une saison en dents de scie mais tellement Marseille.",
     players: [
       { n: "Steve Mandanda", p: "G", o: 84, a: 26, nat: "France" },
       { n: "Cesar Azpilicueta", p: "DD", s: ["DG"], o: 78, a: 22, nat: "Espagne", pot: 86 },
@@ -645,10 +644,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "Paris Saint-Germain",
+    club: "Paris",
     season: "2012-13",
-    fifa: "FIFA15",
-    league: "Ligue 1",
+    era: "E2010",
+    league: "Championnat de France",
     coach: "Carlo Ancelotti",
     finalPosition: 1,
     points: 83,
@@ -673,10 +672,10 @@ const RAW_TEAMS: RawTeam[] = [
     ],
   },
   {
-    club: "Girondins de Bordeaux",
+    club: "Bordeaux",
     season: "2009-10",
-    fifa: "FIFA10",
-    league: "Ligue 1",
+    era: "E2007",
+    league: "Championnat de France",
     coach: "Laurent Blanc",
     finalPosition: 6,
     points: 64,

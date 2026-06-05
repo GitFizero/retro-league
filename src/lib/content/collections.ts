@@ -16,7 +16,7 @@ export interface Collection {
 export const COLLECTIONS: Collection[] = [
   {
     id: "ol_dynasty",
-    name: "OL Dynasty",
+    name: "Lyon Dynastie",
     required: ["Juninho", "Govou", "Cris", "Toulalan", "Benzema"],
     flavor: "Le Lyon des sept titres reuni sous un meme maillot.",
   },
@@ -40,19 +40,19 @@ export const COLLECTIONS: Collection[] = [
   },
   {
     id: "ol_galactique",
-    name: "OL Galactique",
+    name: "Lyon Galactique",
     required: ["Juninho", "Malouda", "Wiltord", "Govou"],
     flavor: "Le Lyon flamboyant du milieu des annees 2000.",
   },
   {
     id: "psg_pre_qatar",
-    name: "PSG Pre-Qatar",
+    name: "Paris Pre-Qatar",
     required: ["Nene", "Hoarau", "Sakho", "Giuly"],
     flavor: "Le dernier Paris romantique, juste avant la revolution.",
   },
   {
     id: "om_phoceen",
-    name: "OM Phoceen",
+    name: "Marseille Phoceen",
     required: ["Valbuena", "Gignac", "Remy", "Ayew"],
     flavor: "Le Velodrome des annees Deschamps, Petit Velo en chef d'orchestre.",
   },

@@ -20,7 +20,7 @@ describe("full season integration", () => {
   function makeLeague(n: number): Club[] {
     const clubs: Club[] = [];
     for (let i = 0; i < n; i++) {
-      const squad = aiDraftSquad(new Rng("club" + i), "FC26_FIFA07", "equilibree");
+      const squad = aiDraftSquad(new Rng("club" + i), "TOUTE_HISTOIRE", "equilibree");
       const formation = bestFormationFor(squad);
       clubs.push({
         id: "c" + i,

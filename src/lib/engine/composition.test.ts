@@ -10,27 +10,27 @@ import { Rng } from "@/lib/engine/rng";
 
 describe("draft + composition", () => {
   it("ai drafts a full squad", () => {
-    const squad = aiDraftSquad(new Rng("draft"), "FC26_FIFA07", "equilibree");
+    const squad = aiDraftSquad(new Rng("draft"), "TOUTE_HISTOIRE", "equilibree");
     expect(squad.length).toBe(SQUAD_SIZE);
     expect(new Set(squad).size).toBe(squad.length); // no duplicates within squad
   });
 
   it("autoLineup fields exactly 11 starters", () => {
-    const squad = aiDraftSquad(new Rng("c"), "FC26_FIFA07", "equilibree");
+    const squad = aiDraftSquad(new Rng("c"), "TOUTE_HISTOIRE", "equilibree");
     const lineup = autoLineup(squad, "4-3-3");
     expect(lineup.filter((e) => e.starter).length).toBe(11);
     expect(lineup.filter((e) => !e.starter).length).toBeLessThanOrEqual(5);
   });
 
   it("produces sane team ratings in the 50-95 band", () => {
-    const squad = aiDraftSquad(new Rng("r"), "FC26_FIFA20", "offensive");
+    const squad = aiDraftSquad(new Rng("r"), "DEPUIS_2015", "offensive");
     const rating = teamRating(autoLineup(squad, "4-3-3"));
     expect(rating).toBeGreaterThan(50);
     expect(rating).toBeLessThan(95);
   });
 
   it("weights the four lines (gk/def/mid/atk) into the rating", () => {
-    const squad = aiDraftSquad(new Rng("r2"), "FC26_FIFA20", "equilibree");
+    const squad = aiDraftSquad(new Rng("r2"), "DEPUIS_2015", "equilibree");
     const lineup = autoLineup(squad, "4-4-2");
     const s = lineStrengths(lineup);
     const manual = s.GK * 0.2 + s.DEF * 0.25 + s.MID * 0.25 + s.ATK * 0.3;
