@@ -18,7 +18,12 @@ import {
 } from "@/lib/engine/fixtures";
 import { Rng } from "@/lib/engine/rng";
 import { simulateFixture } from "@/lib/engine/simulation";
-import type { Club, FormationName, HistoricalDepth } from "@/lib/types";
+import type { Club, Fixture, FormationName, HistoricalDepth } from "@/lib/types";
+
+export interface MiniClub {
+  id: string;
+  name: string;
+}
 
 /**
  * MODE DEFI — la reponse virale facon 38-0, version Retro League.
@@ -53,6 +58,8 @@ export interface ChallengeResult {
   topScorer?: { name: string; goals: number };
   legendaryHighlights: string[];
   bestWin?: string;
+  /** The signature match of the season, re-livable in the match viewer. */
+  highlight?: { fixture: Fixture; home: MiniClub; away: MiniClub };
 }
 
 interface ChallengeState {
@@ -212,6 +219,12 @@ function runChallenge(
   const scorers = new Map<string, number>();
   let bestWin: string | undefined;
   let bestMargin = 0;
+  const nameOf = (id: string) => clubs.find((c) => c.id === id)?.name ?? id;
+
+  // Pick the signature match: the one with the most legendary moments, then by
+  // win margin. It becomes re-livable in the result screen.
+  let highlightFixture = myFixtures[0];
+  let highlightScore = -1;
 
   for (const f of myFixtures) {
     const meHome = f.homeClubId === ME;
@@ -219,20 +232,35 @@ function runChallenge(
     const oppScore = (meHome ? f.awayScore : f.homeScore) ?? 0;
     if (myScore > oppScore && myScore - oppScore > bestMargin) {
       bestMargin = myScore - oppScore;
-      const opp = clubs.find(
-        (c) => c.id === (meHome ? f.awayClubId : f.homeClubId)
-      );
-      bestWin = `${myScore}-${oppScore} contre ${opp?.name}`;
+      bestWin = `${myScore}-${oppScore} contre ${nameOf(
+        meHome ? f.awayClubId : f.homeClubId
+      )}`;
     }
+    let legends = 0;
     for (const e of f.events) {
-      if (e.clubId === ME && e.type === "legendary" && legendaryHighlights.length < 5) {
-        legendaryHighlights.push(e.description);
+      if (e.clubId === ME && e.type === "legendary") {
+        legends++;
+        if (legendaryHighlights.length < 5) legendaryHighlights.push(e.description);
       }
       if (e.clubId === ME && (e.type === "goal" || e.type === "legendary") && e.playerId) {
         scorers.set(e.playerId, (scorers.get(e.playerId) ?? 0) + 1);
       }
     }
+    const margin = myScore - oppScore;
+    const fixtureScore = legends * 100 + margin;
+    if (fixtureScore > highlightScore) {
+      highlightScore = fixtureScore;
+      highlightFixture = f;
+    }
   }
+
+  const highlight = highlightFixture
+    ? {
+        fixture: highlightFixture,
+        home: { id: highlightFixture.homeClubId, name: nameOf(highlightFixture.homeClubId) },
+        away: { id: highlightFixture.awayClubId, name: nameOf(highlightFixture.awayClubId) },
+      }
+    : undefined;
 
   const top = [...scorers.entries()].sort((a, b) => b[1] - a[1])[0];
   const topScorer = top
@@ -267,5 +295,6 @@ function runChallenge(
     topScorer,
     legendaryHighlights,
     bestWin,
+    highlight,
   };
 }

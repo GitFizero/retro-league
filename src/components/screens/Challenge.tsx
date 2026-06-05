@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Shell } from "@/components/Shell";
 import { PlayerCard } from "@/components/PlayerCard";
+import { MatchModal } from "@/components/MatchModal";
 import { useChallenge, CHALLENGE_XI } from "@/lib/challenge";
 import { HISTORICAL_TEAMS, getPlayer } from "@/lib/content/teams";
+import type { Club } from "@/lib/types";
 
 export function Challenge() {
   const phase = useChallenge((s) => s.phase);
@@ -176,8 +178,17 @@ function ChallengeResult() {
   const start = useChallenge((s) => s.start);
   const reset = useChallenge((s) => s.reset);
   const [copied, setCopied] = useState(false);
+  const [replay, setReplay] = useState(false);
 
   if (!result) return null;
+
+  // Minimal Club stubs for the match viewer (it only needs id + name).
+  const replayClubs = result.highlight
+    ? ([
+        { ...EMPTY_CLUB, ...result.highlight.home },
+        { ...EMPTY_CLUB, ...result.highlight.away },
+      ] as Club[])
+    : [];
 
   const verdict = result.perfectSeason
     ? "SAISON PARFAITE"
@@ -267,12 +278,21 @@ function ChallengeResult() {
           )}
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-2 justify-center">
+        {result.highlight && (
+          <button
+            className="retro-btn retro-btn-primary w-full mt-5"
+            onClick={() => setReplay(true)}
+          >
+            ▶ Revivre le match de ta saison
+          </button>
+        )}
+
+        <div className="mt-3 flex flex-wrap gap-2 justify-center">
           <button className="retro-btn retro-btn-gold" onClick={share}>
             {copied ? "Copie !" : "Partager mon defi"}
           </button>
           <button
-            className="retro-btn retro-btn-primary"
+            className="retro-btn"
             onClick={() => start(teamName)}
           >
             Rejouer
@@ -282,9 +302,26 @@ function ChallengeResult() {
           </button>
         </div>
       </motion.div>
+
+      {replay && result.highlight && (
+        <MatchModal
+          fixture={result.highlight.fixture}
+          clubs={replayClubs}
+          live
+          onClose={() => setReplay(false)}
+        />
+      )}
     </Shell>
   );
 }
+
+const EMPTY_CLUB: Omit<Club, "id" | "name"> = {
+  isAI: false,
+  squad: [],
+  lineup: [],
+  formation: "4-4-2",
+  form: 0,
+};
 
 function Stat({
   label,
