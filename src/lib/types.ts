@@ -150,6 +150,8 @@ export type LeagueStatus =
   | "mercato"
   | "finished";
 
+export type FixtureStatusValue = "scheduled" | "played";
+
 export interface Fixture {
   id: string;
   matchday: number;
@@ -157,7 +159,7 @@ export interface Fixture {
   awayClubId: string;
   homeScore: number | null;
   awayScore: number | null;
-  status: "scheduled" | "played";
+  status: FixtureStatusValue;
   events: MatchEvent[];
 }
 
@@ -227,11 +229,13 @@ export interface StandingRow {
   points: number;
 }
 
+export type TradeStatusValue = "pending" | "accepted" | "rejected";
+
 export interface TradeOffer {
   id: string;
   fromClubId: string;
   toClubId: string;
   offered: string[]; // player ids
   requested: string[]; // player ids
-  status: "pending" | "accepted" | "rejected";
+  status: TradeStatusValue;
 }

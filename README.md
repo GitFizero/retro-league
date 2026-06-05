@@ -87,9 +87,25 @@ Le moteur (`src/lib/engine`) ne dépend ni de React ni du navigateur : il est
 côté client »). Voir [`docs/PRD-MAPPING.md`](docs/PRD-MAPPING.md) pour la
 correspondance détaillée PRD ↔ code et le plan de portage vers Supabase.
 
+## Backend multijoueur (Supabase)
+
+Le jeu solo tourne sans backend. Un socle Supabase **prêt à déployer** est
+fourni : schéma + RLS (`supabase/migrations`), seed de contenu généré depuis la
+Content Bible (`npm run seed:gen`), clients typés et **API serveur qui exécute
+le moteur** (les simulations ne tournent jamais côté client). Voir
+[`docs/SUPABASE.md`](docs/SUPABASE.md).
+
+## Propriété intellectuelle
+
+Aucune photo, aucun logo, aucun maillot. Clubs désignés par le nom de **ville**,
+pas de marques tierces (ni « Ligue 1 », ni « FIFA », etc.). La posture et le
+point d'extension « noms sûrs » sont documentés dans
+[`docs/LEGAL-IP.md`](docs/LEGAL-IP.md).
+
 ## Statut
 
 MVP jouable conforme à la roadmap MVP du Tome 2 (compte/ligue local, draft,
-composition, simulation, classement, IA, mercato, moments légendaires). Les
-phases V2/V3 (multijoueur temps réel Supabase, draft exclusive, ligues
-européennes) sont décrites dans `docs/PRD-MAPPING.md`.
+composition, simulation, classement, IA, mercato, moments légendaires) + socle
+backend Supabase. Les phases V2/V3 (draft interactif serveur, draft exclusive,
+ligues européennes) sont décrites dans `docs/PRD-MAPPING.md` et
+`docs/SUPABASE.md`.
