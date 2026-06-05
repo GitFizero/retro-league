@@ -182,7 +182,7 @@ const RAW_TEAMS: RawTeam[] = [
     finalPosition: 4,
     points: 77,
     description:
-      "Finaliste de la Ligue Europa. Payet et Thauvin font rever le Velodrome.",
+      "Finaliste d'une grande coupe europeenne. Payet et Thauvin font rever le Velodrome.",
     players: [
       { n: "Steve Mandanda", p: "G", o: 84, a: 32, nat: "France" },
       { n: "Hiroki Sakai", p: "DD", o: 78, a: 27, nat: "Japon" },
@@ -342,7 +342,7 @@ const RAW_TEAMS: RawTeam[] = [
     finalPosition: 7,
     points: 56,
     description:
-      "La saison de l'eclosion de Drogba. Finale de Coupe UEFA au bout du reve.",
+      "La saison de l'eclosion de Drogba. Finale europeenne au bout du reve.",
     players: [
       { n: "Fabien Barthez", p: "G", o: 84, a: 32, nat: "France" },
       { n: "Abdoulaye Meite", p: "DC", o: 76, a: 23, nat: "Cote d'Ivoire" },
@@ -392,7 +392,7 @@ const RAW_TEAMS: RawTeam[] = [
     finalPosition: 5,
     points: 63,
     description:
-      "Les Verts soulevent la Coupe de la Ligue. Le Chaudron gronde a nouveau.",
+      "Saint-Etienne souleve une coupe nationale. Le Chaudron gronde a nouveau.",
     players: [
       { n: "Stephane Ruffier", p: "G", o: 82, a: 26, nat: "France" },
       { n: "Francois Clerc", p: "DD", o: 75, a: 29, nat: "France" },
@@ -470,7 +470,7 @@ const RAW_TEAMS: RawTeam[] = [
     finalPosition: 3,
     points: 75,
     description:
-      "L'epopee europeenne : Monaco terrasse le Real et atteint la finale de la Ligue des Champions.",
+      "L'epopee europeenne : Monaco terrasse les geants du continent et atteint la finale europeenne supreme.",
     mythicTag: "EPOPEE EUROPEENNE",
     players: [
       { n: "Flavio Roma", p: "G", o: 80, a: 29, nat: "Italie" },
@@ -523,7 +523,7 @@ const RAW_TEAMS: RawTeam[] = [
     finalPosition: 5,
     points: 60,
     description:
-      "Les Lionceaux soulevent la Coupe de la Ligue. Le beau jeu made in Franche-Comte.",
+      "Sochaux souleve une coupe nationale. Le beau jeu made in Franche-Comte.",
     players: [
       { n: "Teddy Richert", p: "G", o: 76, a: 29, nat: "France" },
       { n: "Rabiu Afolabi", p: "DC", o: 74, a: 24, nat: "Nigeria" },
@@ -680,7 +680,7 @@ const RAW_TEAMS: RawTeam[] = [
     finalPosition: 6,
     points: 64,
     description:
-      "Quart de finale de la Ligue des Champions. Gourcuff 2009 au sommet de son art.",
+      "Parcours europeen marquant jusqu'en quart. Gourcuff 2009 au sommet de son art.",
     players: [
       { n: "Cedric Carrasso", p: "G", o: 81, a: 28, nat: "France" },
       { n: "Mathieu Chalme", p: "DD", o: 75, a: 29, nat: "France" },

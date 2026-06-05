@@ -9,26 +9,26 @@ values
   ('LYON_2007', 'Lyon', '2007-08', 'E2007', 'Championnat de France', 'Alain Perrin', 1, 79, 'Septieme titre consecutif. Lyon regne encore sans partage sur le championnat.', 'DYNASTIE'),
   ('BORDEAUX_2008', 'Bordeaux', '2008-09', 'E2007', 'Championnat de France', 'Laurent Blanc', 1, 80, 'Bordeaux deroule son football comme au printemps 2009. Champions.', 'DOMINATION'),
   ('MARSEILLE_2009', 'Marseille', '2009-10', 'E2007', 'Championnat de France', 'Didier Deschamps', 1, 78, 'Champion de France. Meilleur buteur : Mamadou Niang. Le Velodrome revit.', null),
-  ('MARSEILLE_2017', 'Marseille', '2017-18', 'E2015', 'Championnat de France', 'Rudi Garcia', 4, 77, 'Finaliste de la Ligue Europa. Payet et Thauvin font rever le Velodrome.', null),
+  ('MARSEILLE_2017', 'Marseille', '2017-18', 'E2015', 'Championnat de France', 'Rudi Garcia', 4, 77, 'Finaliste d''une grande coupe europeenne. Payet et Thauvin font rever le Velodrome.', null),
   ('MONACO_2016', 'Monaco', '2016-17', 'E2015', 'Championnat de France', 'Leonardo Jardim', 1, 95, 'Monaco joue comme s''il etait encore en route vers les demi-finales europeennes.', 'SAISON MYTHIQUE'),
   ('LILLE_2010', 'Lille', '2010-11', 'E2010', 'Championnat de France', 'Rudi Garcia', 1, 76, 'Le doute n''existe pas. Lille realise le double Coupe-Championnat.', 'CHAMPION'),
   ('MONTPELLIER_2011', 'Montpellier', '2011-12', 'E2010', 'Championnat de France', 'Rene Girard', 1, 82, 'Personne ne les attendait la. Encore une fois. Le miracle de la Paillade.', 'MIRACLE'),
   ('PARIS_2015', 'Paris', '2015-16', 'E2015', 'Championnat de France', 'Laurent Blanc', 1, 96, 'Une saison de domination absolue. 96 points, un record francais.', 'DOMINATION'),
   ('NICE_2015', 'Nice', '2015-16', 'E2015', 'Championnat de France', 'Claude Puel', 4, 63, 'La saison ou Ben Arfa a decide de jouer seul. Et ca a marche.', null),
-  ('MARSEILLE_2003', 'Marseille', '2003-04', 'E2003', 'Championnat de France', 'Jose Anigo', 7, 56, 'La saison de l''eclosion de Drogba. Finale de Coupe UEFA au bout du reve.', null),
+  ('MARSEILLE_2003', 'Marseille', '2003-04', 'E2003', 'Championnat de France', 'Jose Anigo', 7, 56, 'La saison de l''eclosion de Drogba. Finale europeenne au bout du reve.', null),
   ('PARIS_2006', 'Paris', '2006-07', 'E2003', 'Championnat de France', 'Guy Lacombe', 15, 47, 'Une occasion suffit a Pauleta. Le Portugais porte un Paris en crise.', null),
-  ('SAINT_ETIENNE_2012', 'Saint-Etienne', '2012-13', 'E2010', 'Championnat de France', 'Christophe Galtier', 5, 63, 'Les Verts soulevent la Coupe de la Ligue. Le Chaudron gronde a nouveau.', null),
+  ('SAINT_ETIENNE_2012', 'Saint-Etienne', '2012-13', 'E2010', 'Championnat de France', 'Christophe Galtier', 5, 63, 'Saint-Etienne souleve une coupe nationale. Le Chaudron gronde a nouveau.', null),
   ('LENS_2006', 'Lens', '2006-07', 'E2003', 'Championnat de France', 'Francis Gillot', 5, 57, 'Bollaert pousse. Les Sang et Or accrochent l''Europe au courage.', null),
   ('LYON_2006', 'Lyon', '2006-07', 'E2003', 'Championnat de France', 'Gerard Houllier', 1, 81, 'Sixieme titre d''affilee. Le Lyon galactique de Juninho, Malouda et un certain Benzema.', 'DYNASTIE'),
-  ('MONACO_2003', 'Monaco', '2003-04', 'E2003', 'Championnat de France', 'Didier Deschamps', 3, 75, 'L''epopee europeenne : Monaco terrasse le Real et atteint la finale de la Ligue des Champions.', 'EPOPEE EUROPEENNE'),
+  ('MONACO_2003', 'Monaco', '2003-04', 'E2003', 'Championnat de France', 'Didier Deschamps', 3, 75, 'L''epopee europeenne : Monaco terrasse les geants du continent et atteint la finale europeenne supreme.', 'EPOPEE EUROPEENNE'),
   ('PARIS_2002', 'Paris', '2002-03', 'E2003', 'Championnat de France', 'Luis Fernandez', 11, 47, 'La magie d''un sorcier bresilien au Parc. Avant Barcelone, Ronaldinho enflammait Paris.', 'MAGIE'),
-  ('SOCHAUX_2003', 'Sochaux', '2003-04', 'E2003', 'Championnat de France', 'Guy Lacombe', 5, 60, 'Les Lionceaux soulevent la Coupe de la Ligue. Le beau jeu made in Franche-Comte.', null),
+  ('SOCHAUX_2003', 'Sochaux', '2003-04', 'E2003', 'Championnat de France', 'Guy Lacombe', 5, 60, 'Sochaux souleve une coupe nationale. Le beau jeu made in Franche-Comte.', null),
   ('LYON_2010', 'Lyon', '2010-11', 'E2010', 'Championnat de France', 'Claude Puel', 3, 64, 'Lloris dans les buts, Gourcuff a la baguette, Lisandro a la finition. Une fin de regne en beaute.', null),
   ('PARIS_2010', 'Paris', '2010-11', 'E2007', 'Championnat de France', 'Antoine Kombouare', 4, 60, 'Le dernier Paris d''avant le Qatar. Nene regale, Hoarau plante, le jeune Sakho commande.', 'PRE-QATAR'),
   ('SAINT_ETIENNE_2008', 'Saint-Etienne', '2008-09', 'E2007', 'Championnat de France', 'Alain Perrin', 17, 41, 'Saison galere dans le Chaudron, mais quelle pepiniere : un certain Payet, un certain Matuidi.', null),
   ('MARSEILLE_2011', 'Marseille', '2011-12', 'E2010', 'Championnat de France', 'Didier Deschamps', 10, 52, 'Le Velodrome vibre pour Valbuena et Gignac. Une saison en dents de scie mais tellement Marseille.', null),
   ('PARIS_2012', 'Paris', '2012-13', 'E2010', 'Championnat de France', 'Carlo Ancelotti', 1, 83, 'An I de l''ere Qatar : Zlatan debarque, regne, et offre le titre a Paris.', 'NOUVELLE ERE'),
-  ('BORDEAUX_2009', 'Bordeaux', '2009-10', 'E2007', 'Championnat de France', 'Laurent Blanc', 6, 64, 'Quart de finale de la Ligue des Champions. Gourcuff 2009 au sommet de son art.', null);
+  ('BORDEAUX_2009', 'Bordeaux', '2009-10', 'E2007', 'Championnat de France', 'Laurent Blanc', 6, 64, 'Parcours europeen marquant jusqu''en quart. Gourcuff 2009 au sommet de son art.', null);
 
 insert into players
   (id, name, position, secondary_positions, overall, potential, age, nationality, decade, historical_team_id, club, season, era)
