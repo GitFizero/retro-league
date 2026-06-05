@@ -23,6 +23,16 @@ const GOAL_LINES: ((c: NarrationContext) => string)[] = [
   (c) => `${c.scorer} efface son vis-a-vis et conclut du gauche.`,
   (c) => `Coup de tete rageur de ${c.scorer} sur corner.`,
   (c) => `${c.scorer} prend tout le monde de vitesse et pousse le ballon au fond.`,
+  (c) => `Frappe enroulee de ${c.scorer} dans le petit filet, le gardien est battu.`,
+  (c) => `${c.scorer} arme une demi-volee somptueuse depuis l'entree de la surface.`,
+  (c) => `Slalom de ${c.scorer} qui met trois defenseurs dans le vent avant de conclure.`,
+  (c) => `${c.scorer} herite d'un ballon dans la surface et ne tremble pas.`,
+  (c) => `Lob malicieux de ${c.scorer} par-dessus le gardien sorti trop vite.`,
+  (c) => `${c.scorer} catapulte une tete plongeante imparable pour le ${c.club}.`,
+  (c) => `Contre-pied parfait : ${c.scorer} envoie le gardien dans le decor.`,
+  (c) => `${c.scorer} surgit au second poteau et pousse le cuir au fond.`,
+  (c) => `Mine lointaine de ${c.scorer}, la barre tremble et le ballon rentre.`,
+  (c) => `${c.scorer} transperce la defense d'un plat du pied chirurgical.`,
 ];
 
 const GOAL_LINES_WITH_ASSIST: ((c: NarrationContext) => string)[] = [
@@ -31,6 +41,11 @@ const GOAL_LINES_WITH_ASSIST: ((c: NarrationContext) => string)[] = [
   (c) => `Centre millimetre de ${c.assist}, ${c.scorer} n'a plus qu'a pousser.`,
   (c) => `${c.assist} sert ${c.scorer} dans la course, finition parfaite.`,
   (c) => `Ouverture lumineuse de ${c.assist}, ${c.scorer} conclut l'action.`,
+  (c) => `${c.assist} efface deux joueurs et offre le but a ${c.scorer}.`,
+  (c) => `Coup franc deux temps : ${c.assist} pour ${c.scorer}, imparable.`,
+  (c) => `${c.assist} deborde et delivre un caviar que ${c.scorer} ne gache pas.`,
+  (c) => `Talonnade geniale de ${c.assist}, ${c.scorer} fusille le gardien.`,
+  (c) => `${c.assist} temporise puis glisse le ballon a ${c.scorer}, but du ${c.club}.`,
 ];
 
 export function narrateGoal(c: NarrationContext): string {

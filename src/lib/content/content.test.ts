@@ -9,9 +9,9 @@ import { momentsForPlayer } from "@/lib/content/legendary";
 import { ALL_POSITIONS } from "@/lib/types";
 
 describe("content bible integrity", () => {
-  it("has a healthy pool of teams and players", () => {
-    expect(HISTORICAL_TEAMS.length).toBeGreaterThanOrEqual(10);
-    expect(ALL_PLAYERS.length).toBeGreaterThanOrEqual(120);
+  it("has a rich pool of teams and players", () => {
+    expect(HISTORICAL_TEAMS.length).toBeGreaterThanOrEqual(20);
+    expect(ALL_PLAYERS.length).toBeGreaterThanOrEqual(250);
   });
 
   it("gives every player a unique version id (Modele Sofifa)", () => {
@@ -52,5 +52,25 @@ describe("content bible integrity", () => {
       (t) => t.clubName === "Olympique de Marseille"
     );
     expect(marseille.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("wires the newly added forgotten legends", () => {
+    for (const name of ["Ronaldinho", "Giuly", "Gignac", "Pjanic"]) {
+      const p = ALL_PLAYERS.find((x) => x.name.includes(name));
+      expect(p, name).toBeDefined();
+      expect(momentsForPlayer(p!.name).length, name).toBeGreaterThan(0);
+    }
+  });
+
+  it("unlocks a hidden collection when its set is owned", () => {
+    const set = ALL_PLAYERS.filter((p) =>
+      ["Juninho", "Malouda", "Wiltord", "Govou"].some((n) =>
+        p.name.includes(n)
+      )
+    );
+    const names = set.map((p) => p.name.toLowerCase());
+    for (const req of ["Juninho", "Malouda", "Wiltord", "Govou"]) {
+      expect(names.some((n) => n.includes(req.toLowerCase())), req).toBe(true);
+    }
   });
 });

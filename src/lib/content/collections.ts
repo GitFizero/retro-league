@@ -32,6 +32,30 @@ export const COLLECTIONS: Collection[] = [
     required: ["Mbappe", "Falcao", "Fabinho", "Bernardo Silva", "Mendy"],
     flavor: "La fusee monegasque au complet.",
   },
+  {
+    id: "monaco_2004",
+    name: "Monaco 2004",
+    required: ["Giuly", "Morientes", "Rothen", "Evra"],
+    flavor: "L'epopee europeenne, du Real a la finale, reconstituee.",
+  },
+  {
+    id: "ol_galactique",
+    name: "OL Galactique",
+    required: ["Juninho", "Malouda", "Wiltord", "Govou"],
+    flavor: "Le Lyon flamboyant du milieu des annees 2000.",
+  },
+  {
+    id: "psg_pre_qatar",
+    name: "PSG Pre-Qatar",
+    required: ["Nene", "Hoarau", "Sakho", "Giuly"],
+    flavor: "Le dernier Paris romantique, juste avant la revolution.",
+  },
+  {
+    id: "om_phoceen",
+    name: "OM Phoceen",
+    required: ["Valbuena", "Gignac", "Remy", "Ayew"],
+    flavor: "Le Velodrome des annees Deschamps, Petit Velo en chef d'orchestre.",
+  },
 ];
 
 /** SUCCES (Tome 1 section 19). */

@@ -131,7 +131,69 @@ export const LEGENDARY_MOMENTS: LegendaryMoment[] = [
     archetype: "TUEUR",
     trigger: "end_of_match",
     bonus: 9,
-    narration: ["En fin de match, Lisandro Lopez ne pardonne jamais."],
+    narration: [
+      "En fin de match, Lisandro Lopez ne pardonne jamais.",
+      "Lisandro surgit dans le money time : l'Argentin a le sens du timing.",
+    ],
+  },
+  {
+    playerMatch: "Ronaldinho",
+    archetype: "SORCIER",
+    trigger: "big_match",
+    bonus: 13,
+    narration: [
+      "Ronaldinho transforme le Parc en terrain de jeu, sourire aux levres.",
+      "Elastico, sombrero, et le ballon finit au fond : Ronaldinho regale.",
+      "Ronaldinho invente un geste que personne n'avait jamais vu.",
+    ],
+  },
+  {
+    playerMatch: "Ronaldinho",
+    archetype: "SORCIER",
+    trigger: "free_kick",
+    bonus: 11,
+    narration: ["Coup franc brosse de Ronaldinho, le gardien reste cloue."],
+  },
+  {
+    playerMatch: "Giuly",
+    archetype: "LUTIN",
+    trigger: "counter_attack",
+    bonus: 9,
+    narration: [
+      "Giuly file comme un lutin et trompe le gardien.",
+      "Le petit Giuly se faufile partout : impossible a attraper.",
+    ],
+  },
+  {
+    playerMatch: "Morientes",
+    archetype: "RENARD",
+    trigger: "box",
+    bonus: 9,
+    narration: ["Morientes prend le dessus dans les airs : but du renard."],
+  },
+  {
+    playerMatch: "Gignac",
+    archetype: "GUERRIER",
+    trigger: "big_match",
+    bonus: 9,
+    narration: [
+      "Gignac repond toujours present dans les grands soirs.",
+      "Une truelle de Gignac, et le Velodrome explose.",
+    ],
+  },
+  {
+    playerMatch: "Lacazette",
+    archetype: "RENARD",
+    trigger: "decisive",
+    bonus: 8,
+    narration: ["Lacazette n'a besoin que d'un ballon pour faire la difference."],
+  },
+  {
+    playerMatch: "Pjanic",
+    archetype: "TIREUR D'ELITE",
+    trigger: "free_kick",
+    bonus: 11,
+    narration: ["Pjanic arme un coup franc soyeux, droit dans la lucarne."],
   },
 ];
 
@@ -171,6 +233,14 @@ export const RIVALRIES: Rivalry[] = [
     b: "Monaco",
     intensity: 1.1,
     narration: "La Cote d'Azur s'embrase le temps d'un soir.",
+  },
+  {
+    id: "choc_olympiques",
+    label: "Le Choc des Olympiques",
+    a: "Lyon",
+    b: "Marseille",
+    intensity: 1.15,
+    narration: "OL contre OM : le sommet du championnat se joue ce soir.",
   },
 ];
 
