@@ -1,6 +1,6 @@
 "use client";
 
-import { Shell, NewLeagueButton } from "@/components/Shell";
+import { Shell } from "@/components/Shell";
 import {
   useGame,
   HUMAN_CLUB_ID,
@@ -11,12 +11,17 @@ import {
 export function HallOfFame() {
   const league = useGame((s) => s.league);
   const standings = useGame((s) => s.standings());
+  const seasonNumber = useGame((s) => s.seasonNumber);
+  const palmares = useGame((s) => s.palmares);
+  const nextSeason = useGame((s) => s.nextSeason);
+  const reset = useGame((s) => s.reset);
 
   if (!league) return null;
 
   const champion = standings[0];
   const scorers = topScorers(league, 5);
-  const { collections, achievements } = hallOfFameAwards(league);
+  const { collections, achievements } = hallOfFameAwards(league, seasonNumber);
+  const humanTitles = palmares.filter((p) => p.humanChampion).length;
 
   // Biggest win across the season.
   let biggest = { label: "—", margin: -1 };
@@ -38,7 +43,7 @@ export function HallOfFame() {
     standings.findIndex((r) => r.clubId === HUMAN_CLUB_ID) + 1;
 
   return (
-    <Shell subtitle="Hall of Fame — la saison est terminee">
+    <Shell subtitle={`Hall of Fame — Saison ${seasonNumber} terminee`}>
       <div className="text-center mb-8">
         <span className="stamp text-lg">CHAMPION</span>
         <h2 className="font-display text-4xl font-black mt-4 text-retro">
@@ -124,10 +129,51 @@ export function HallOfFame() {
             </ul>
           )}
         </Panel>
+
+        <Panel title={`Palmares — ${humanTitles} titre${humanTitles > 1 ? "s" : ""}`}>
+          {palmares.length === 0 ? (
+            <p className="text-sm text-ink/55 italic">
+              Premiere saison. L&apos;histoire commence ici.
+            </p>
+          ) : (
+            <ol className="space-y-1 text-sm">
+              {[...palmares].reverse().map((p) => (
+                <li
+                  key={p.season}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <span>
+                    Saison {p.season} —{" "}
+                    <span className={p.humanChampion ? "text-retro font-bold" : ""}>
+                      {p.championName}
+                    </span>
+                  </span>
+                  <span className="text-ink/50 text-xs shrink-0">
+                    vous : {p.humanRank}
+                    <sup>{p.humanRank === 1 ? "er" : "e"}</sup>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </Panel>
       </div>
 
-      <div className="mt-8 text-center">
-        <NewLeagueButton label="Nouvelle saison" />
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <button
+          className="retro-btn retro-btn-primary"
+          onClick={() => nextSeason()}
+        >
+          Saison suivante →
+        </button>
+        <button
+          className="retro-btn text-sm"
+          onClick={() => {
+            if (confirm("Quitter et creer une nouvelle ligue ?")) reset();
+          }}
+        >
+          Nouvelle ligue
+        </button>
       </div>
     </Shell>
   );

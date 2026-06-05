@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useGame } from "@/lib/store";
 
 export function Masthead({ subtitle }: { subtitle?: string }) {
@@ -32,10 +33,15 @@ export function Shell({
   subtitle?: string;
 }) {
   return (
-    <main className="max-w-5xl mx-auto px-4 py-6 sm:py-10">
+    <motion.main
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="max-w-5xl mx-auto px-4 py-6 sm:py-10"
+    >
       <Masthead subtitle={subtitle} />
       {children}
-    </main>
+    </motion.main>
   );
 }
 

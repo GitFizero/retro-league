@@ -12,9 +12,31 @@ export function Season() {
   const standings = useGame((s) => s.standings());
   const playMatchday = useGame((s) => s.playMatchday);
   const simulateRest = useGame((s) => s.simulateRestOfSeason);
+  const seasonNumber = useGame((s) => s.seasonNumber);
   const [tab, setTab] = useState<"results" | "standings">("results");
   const [openFixture, setOpenFixture] = useState<Fixture | null>(null);
+  const [liveOpen, setLiveOpen] = useState(false);
   const [viewMd, setViewMd] = useState<number | null>(null);
+
+  const playAndWatch = () => {
+    const playedMd = league?.currentMatchday ?? 1;
+    playMatchday();
+    setViewMd(null);
+    // Open the human's just-played match as a live, minute-by-minute reveal —
+    // only if we're still on the season screen (not paused for mercato/finished).
+    const fresh = useGame.getState().league;
+    if (!fresh || fresh.status !== "season") return;
+    const mine = fresh.fixtures.find(
+      (f) =>
+        f.matchday === playedMd &&
+        f.status === "played" &&
+        (f.homeClubId === HUMAN_CLUB_ID || f.awayClubId === HUMAN_CLUB_ID)
+    );
+    if (mine) {
+      setOpenFixture(mine);
+      setLiveOpen(true);
+    }
+  };
 
   if (!league) return null;
   const total = totalMatchdays(league.clubs.length);
@@ -38,7 +60,7 @@ export function Season() {
   const seasonOver = league.currentMatchday > total;
 
   return (
-    <Shell subtitle={`${league.name} — Championnat`}>
+    <Shell subtitle={`${league.name} — Saison ${seasonNumber}`}>
       <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
         <div className="font-display text-lg">
           Journee <span className="text-retro font-bold">{md}</span> / {total}
@@ -47,10 +69,7 @@ export function Season() {
           {!seasonOver && (
             <button
               className="retro-btn retro-btn-primary text-sm"
-              onClick={() => {
-                playMatchday();
-                setViewMd(null);
-              }}
+              onClick={playAndWatch}
             >
               Jouer la journee
             </button>
@@ -158,7 +177,12 @@ export function Season() {
                 <button
                   key={f.id}
                   disabled={!played}
-                  onClick={() => played && setOpenFixture(f)}
+                  onClick={() => {
+                    if (played) {
+                      setLiveOpen(false);
+                      setOpenFixture(f);
+                    }
+                  }}
                   className={`retro-card p-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-sm ${
                     isHuman ? "ring-2 ring-gold" : ""
                   } ${played ? "hover:-translate-y-0.5" : "opacity-70"}`}
@@ -183,7 +207,11 @@ export function Season() {
         <MatchModal
           fixture={openFixture}
           clubs={league.clubs}
-          onClose={() => setOpenFixture(null)}
+          live={liveOpen}
+          onClose={() => {
+            setOpenFixture(null);
+            setLiveOpen(false);
+          }}
         />
       )}
     </Shell>

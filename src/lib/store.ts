@@ -46,12 +46,23 @@ export interface CreateLeagueInput {
   historicalDepth: HistoricalDepth;
 }
 
+/** One finished season recorded for the multi-season Palmares. */
+export interface PalmaresEntry {
+  season: number;
+  championClubId: string;
+  championName: string;
+  humanRank: number;
+  humanChampion: boolean;
+}
+
 interface GameState {
   league: League | null;
   humanDraw: DraftDraw | null;
   draftSeed: number;
   mercatoDone: boolean;
   offers: TradeOffer[];
+  seasonNumber: number;
+  palmares: PalmaresEntry[];
 
   createLeague: (input: CreateLeagueInput) => void;
   pickHumanPlayer: (playerId: string) => void;
@@ -71,6 +82,7 @@ interface GameState {
   proposeTrade: (toClubId: string, offered: string[], requested: string[]) =>
     { accepted: boolean };
 
+  nextSeason: () => void;
   reset: () => void;
 
   standings: () => StandingRow[];
@@ -123,6 +135,8 @@ export const useGame = create<GameState>()(
       draftSeed: 0,
       mercatoDone: false,
       offers: [],
+      seasonNumber: 1,
+      palmares: [],
 
       createLeague: (input) => {
         const seed = Math.floor(Math.random() * 1e9);
@@ -160,6 +174,8 @@ export const useGame = create<GameState>()(
           draftSeed: seed,
           mercatoDone: false,
           offers: [],
+          seasonNumber: 1,
+          palmares: [],
           humanDraw: newDraw(seed, input.historicalDepth, new Set()),
         });
       },
@@ -363,6 +379,48 @@ export const useGame = create<GameState>()(
         return { accepted: true };
       },
 
+      nextSeason: () => {
+        const { league, seasonNumber, palmares } = get();
+        if (!league || league.status !== "finished") return;
+
+        // Record this season into the rolling Palmares (Tome 1 section 18).
+        const table = computeStandings(league.clubs, league.fixtures);
+        const champion = table[0];
+        const humanRank =
+          table.findIndex((r) => r.clubId === HUMAN_CLUB_ID) + 1;
+        const entry: PalmaresEntry = {
+          season: seasonNumber,
+          championClubId: champion?.clubId ?? "",
+          championName: champion?.clubName ?? "",
+          humanRank,
+          humanChampion: champion?.clubId === HUMAN_CLUB_ID,
+        };
+
+        // Keep squads & collections; reset the competition (new calendar,
+        // fresh form). Human re-composes, the loop returns to Composition.
+        const clubs = league.clubs.map((c) => {
+          const reset = { ...c, form: 0 };
+          return c.isAI
+            ? refreshAiLineup(reset)
+            : { ...reset, lineup: autoLineup(c.squad, c.formation) };
+        });
+        const fixtures = generateFixtures(clubs.map((c) => c.id));
+
+        set({
+          league: {
+            ...league,
+            clubs,
+            fixtures,
+            currentMatchday: 1,
+            status: "composition",
+          },
+          seasonNumber: seasonNumber + 1,
+          palmares: [...palmares, entry],
+          mercatoDone: false,
+          offers: [],
+        });
+      },
+
       reset: () =>
         set({
           league: null,
@@ -370,6 +428,8 @@ export const useGame = create<GameState>()(
           draftSeed: 0,
           mercatoDone: false,
           offers: [],
+          seasonNumber: 1,
+          palmares: [],
         }),
 
       standings: () => {
@@ -501,13 +561,13 @@ export function topScorers(league: League, limit = 10) {
     .slice(0, limit);
 }
 
-export function hallOfFameAwards(league: League) {
+export function hallOfFameAwards(league: League, seasonsPlayed = 1) {
   const human = league.clubs.find((c) => c.id === HUMAN_CLUB_ID);
   const squad = (human?.squad ?? [])
     .map(getPlayer)
     .filter((p): p is NonNullable<ReturnType<typeof getPlayer>> => Boolean(p));
   return {
     collections: unlockedCollections(squad),
-    achievements: unlockedAchievements(squad, 1),
+    achievements: unlockedAchievements(squad, seasonsPlayed),
   };
 }
