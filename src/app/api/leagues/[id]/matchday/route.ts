@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { playNextMatchdayServer } from "@/lib/supabase/repository";
 
 export const dynamic = "force-dynamic";
+// Edge runtime so the app can deploy on Cloudflare Pages (and works on Vercel).
+export const runtime = "edge";
 
 /**
  * POST /api/leagues/:id/matchday — simulate the next matchday on the server.

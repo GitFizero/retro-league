@@ -11,7 +11,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "seed:gen": "vite-node --config vitest.config.ts scripts/generate-seed.ts"
+    "seed:gen": "vite-node --config vitest.config.ts scripts/generate-seed.ts",
+    "pages:build": "npx @cloudflare/next-on-pages@1",
+    "pages:deploy": "npm run pages:build && wrangler pages deploy"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
@@ -23,6 +25,7 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.16",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",

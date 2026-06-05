@@ -5,6 +5,8 @@ import { createLeagueServer } from "@/lib/supabase/repository";
 import type { HistoricalDepth, SimulationMode } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+// Edge runtime so the app can deploy on Cloudflare Pages (and works on Vercel).
+export const runtime = "edge";
 
 /** GET /api/leagues — the signed-in user's leagues (read via RLS). */
 export async function GET() {
