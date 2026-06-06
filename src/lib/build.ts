@@ -4,4 +4,4 @@
  * chaque deploiement notable.
  */
 export const BUILD_TAG =
-  "build 2026-06-06h · adversaires = vrais club-saisons · saison auto + classement live";
+  "build 2026-06-06j · terrain draft/compo · cartes · bilan fin de saison (realise/projete)";

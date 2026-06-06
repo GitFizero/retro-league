@@ -4,6 +4,9 @@ import { useMemo, useState } from "react";
 import { shortName } from "@/lib/format";
 import { Shell, SupportLink } from "@/components/Shell";
 import { computeStandings } from "@/lib/engine/fixtures";
+import { teamRating } from "@/lib/engine/composition";
+import { getPlayer } from "@/lib/content/teams";
+import { Pitch, type PitchSlot } from "@/components/Pitch";
 import {
   useGame,
   HUMAN_CLUB_ID,
@@ -72,6 +75,32 @@ export function HallOfFame() {
   const humanRank =
     standings.findIndex((r) => r.clubId === HUMAN_CLUB_ID) + 1;
 
+  // "Finished vs projected" (facon 38-0) : rang projete = classement par force
+  // d'effectif. Termine au-dessus = surperformance.
+  const humanClub = league.clubs.find((c) => c.id === HUMAN_CLUB_ID);
+  const humanRow = standings.find((r) => r.clubId === HUMAN_CLUB_ID);
+  const projected =
+    [...league.clubs]
+      .sort((a, b) => teamRating(b.lineup) - teamRating(a.lineup))
+      .findIndex((c) => c.id === HUMAN_CLUB_ID) + 1;
+  const verdict =
+    humanRank > 0 && projected > 0
+      ? humanRank < projected
+        ? { label: "SURPERFORMANCE", tone: "text-[#2f7d4f]" }
+        : humanRank > projected
+          ? { label: "EN DESSOUS DES ATTENTES", tone: "text-retro" }
+          : { label: "CONFORME AUX ATTENTES", tone: "text-gold" }
+      : null;
+  const humanXI: PitchSlot[] = humanClub
+    ? humanClub.lineup
+        .filter((e) => e.starter)
+        .map((e) => ({
+          key: e.playerId,
+          position: e.assignedPosition,
+          player: getPlayer(e.playerId),
+        }))
+    : [];
+
   return (
     <Shell subtitle={`Hall of Fame — Saison ${seasonNumber} terminee`}>
       <div className="text-center mb-8">
@@ -93,6 +122,46 @@ export function HallOfFame() {
           </p>
         )}
       </div>
+
+      {humanRow && (
+        <div className="retro-card p-5 mb-6">
+          <div className="grid md:grid-cols-[300px_1fr] gap-6 items-start">
+            <div>
+              <h3 className="font-display font-bold uppercase text-sm tracking-wide border-b-2 border-ink/30 pb-2 mb-3">
+                Votre onze — {humanClub?.name}
+              </h3>
+              <div className="max-w-[260px] mx-auto">
+                <Pitch slots={humanXI} />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <span className="font-display text-5xl font-black text-retro">
+                  {humanRank}
+                  <sup className="text-2xl">{humanRank === 1 ? "er" : "e"}</sup>
+                </span>
+                <span className="text-sm text-ink/60">
+                  projete {projected}
+                  <sup>{projected === 1 ? "er" : "e"}</sup>
+                </span>
+                {verdict && (
+                  <span className={`font-display font-bold text-sm ${verdict.tone}`}>
+                    {verdict.label}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-4">
+                <Stat label="V" value={humanRow.won} tone="text-[#2f7d4f]" />
+                <Stat label="N" value={humanRow.drawn} tone="text-gold" />
+                <Stat label="D" value={humanRow.lost} tone="text-retro" />
+                <Stat label="Pts" value={humanRow.points} />
+                <Stat label="BP" value={humanRow.goalsFor} />
+                <Stat label="BC" value={humanRow.goalsAgainst} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-2 gap-6">
         <Panel title="Meilleurs buteurs">
@@ -222,6 +291,27 @@ export function HallOfFame() {
         </p>
       )}
     </Shell>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone?: string;
+}) {
+  return (
+    <div className="text-center border-2 border-ink/20 rounded-sm py-2">
+      <div className={`font-display text-2xl font-black ${tone ?? "text-ink"}`}>
+        {value}
+      </div>
+      <div className="text-[10px] uppercase tracking-wide text-ink/55">
+        {label}
+      </div>
+    </div>
   );
 }
 

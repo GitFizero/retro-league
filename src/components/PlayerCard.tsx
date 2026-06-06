@@ -86,17 +86,28 @@ export function PlayerCard({
           <div className="font-display font-bold leading-tight truncate">
             {shortName(player.name)}
           </div>
-          <div className="text-xs text-ink/70 truncate">
+          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+            {[player.position, ...player.secondaryPositions].slice(0, 4).map((pos, i) => (
+              <span
+                key={`${pos}-${i}`}
+                className="text-[9px] font-display font-bold leading-none px-1 py-0.5 rounded-sm text-white"
+                style={{ backgroundColor: LINE_COLOR[SIM_LINE_OF[pos]] }}
+              >
+                {pos}
+              </span>
+            ))}
+          </div>
+          <div className="text-xs text-ink/70 truncate mt-0.5">
             {assignedPosition && assignedPosition !== player.position ? (
               <span className={outOfPos ? "text-retro font-semibold" : ""}>
-                {assignedPosition}
+                joue {assignedPosition}
                 {typeof coefficient === "number" &&
                   ` ${Math.round(coefficient * 100)}%`}
+                {" · "}
               </span>
             ) : (
-              POSITION_LABEL[player.position]
+              <span>{POSITION_LABEL[player.position]} · </span>
             )}
-            {" · "}
             {player.nationality}
           </div>
           {!compact && (

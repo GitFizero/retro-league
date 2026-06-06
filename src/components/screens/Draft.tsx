@@ -1,9 +1,9 @@
 "use client";
 
-import { shortName } from "@/lib/format";
 import { motion } from "framer-motion";
 import { Shell, NewLeagueButton } from "@/components/Shell";
 import { PlayerCard } from "@/components/PlayerCard";
+import { Pitch, type PitchSlot } from "@/components/Pitch";
 import { useGame } from "@/lib/store";
 import {
   BENCH_SIZE,
@@ -37,6 +37,20 @@ export function Draft() {
   const step = nextDraftStep(human, withSubs);
   const stillNeeded =
     step.kind === "xi" ? remainingSummary(step.remaining) : [];
+
+  // Pitch slots: drafted starters (filled) + remaining XI slots (empty).
+  const filledSlots: PitchSlot[] = human.lineup
+    .filter((e) => e.starter)
+    .map((e) => ({
+      key: e.playerId,
+      position: e.assignedPosition,
+      player: getPlayer(e.playerId),
+    }));
+  const emptySlots: PitchSlot[] =
+    step.kind === "xi"
+      ? step.remaining.map((pos, i) => ({ key: `empty_${i}_${pos}`, position: pos }))
+      : [];
+  const pitchSlots = [...filledSlots, ...emptySlots];
 
   return (
     <Shell subtitle="Draft historique — le hasard cree les souvenirs">
@@ -156,29 +170,13 @@ export function Draft() {
 
         <aside className="retro-card p-4 h-fit lg:sticky lg:top-4">
           <h3 className="font-display font-bold uppercase text-sm tracking-wide border-b-2 border-ink/30 pb-2 mb-3">
-            Votre effectif
+            Votre onze ({filledSlots.length}/11)
           </h3>
-          {squad.length === 0 ? (
-            <p className="text-sm text-ink/55 italic">
-              Aucune recrue pour l&apos;instant.
+          <Pitch slots={pitchSlots} />
+          {step.kind !== "xi" && (
+            <p className="text-[11px] text-gold font-display font-bold text-center mt-2">
+              🪑 Banc en cours…
             </p>
-          ) : (
-            <ul className="space-y-1 text-sm">
-              {squad
-                .map(getPlayer)
-                .filter((p): p is NonNullable<typeof p> => Boolean(p))
-                .map((p) => (
-                  <li
-                    key={p.id}
-                    className="flex items-center justify-between gap-2"
-                  >
-                    <span className="truncate">{shortName(p.name)}</span>
-                    <span className="text-ink/50 text-xs shrink-0">
-                      {p.position} · {p.overall}
-                    </span>
-                  </li>
-                ))}
-            </ul>
           )}
         </aside>
       </div>

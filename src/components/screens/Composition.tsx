@@ -3,15 +3,16 @@
 import { shortName } from "@/lib/format";
 import { useState } from "react";
 import { Shell, NewLeagueButton } from "@/components/Shell";
+import { Pitch, type PitchSlot } from "@/components/Pitch";
 import { useGame } from "@/lib/store";
 import { getPlayer } from "@/lib/content/teams";
-import { ALL_FORMATIONS, SIM_LINE_OF, positionCoefficient } from "@/lib/engine/positions";
+import { ALL_FORMATIONS, positionCoefficient } from "@/lib/engine/positions";
 import {
   lineStrengths,
   outOfPositionWarnings,
   teamRating,
 } from "@/lib/engine/composition";
-import type { Line, LineupEntry, FormationName } from "@/lib/types";
+import type { Line, FormationName } from "@/lib/types";
 
 const LINE_ORDER: Line[] = ["ATK", "MID", "DEF", "GK"];
 const LINE_LABEL: Record<Line, string> = {
@@ -41,13 +42,21 @@ export function Composition() {
   const lines = lineStrengths(lineup);
   const warnings = outOfPositionWarnings(lineup);
 
-  const byLine: Record<Line, LineupEntry[]> = {
-    GK: [],
-    DEF: [],
-    MID: [],
-    ATK: [],
-  };
-  for (const e of starters) byLine[SIM_LINE_OF[e.assignedPosition]].push(e);
+  const pitchSlots: PitchSlot[] = starters.map((e) => {
+    const p = getPlayer(e.playerId);
+    const coef = p
+      ? positionCoefficient(e.assignedPosition, [p.position, ...p.secondaryPositions])
+      : 1;
+    return {
+      key: e.playerId,
+      position: e.assignedPosition,
+      player: p,
+      coef,
+      selected: selectedStarter === e.playerId,
+      onClick: () =>
+        setSelectedStarter(selectedStarter === e.playerId ? null : e.playerId),
+    };
+  });
 
   const onBenchClick = (benchId: string) => {
     if (selectedStarter) {
@@ -85,57 +94,23 @@ export function Composition() {
       </div>
 
       <div className="grid lg:grid-cols-[1fr_300px] gap-6">
-        <section className="retro-card p-5 bg-[#eef1e6]">
-          <div className="space-y-5">
+        <section>
+          <div className="max-w-sm mx-auto">
+            <Pitch slots={pitchSlots} />
+          </div>
+          <div className="flex justify-center gap-2 mt-3 flex-wrap">
             {LINE_ORDER.map((line) => (
-              <div key={line}>
-                <div className="text-[11px] uppercase tracking-widest text-ink/50 mb-2 font-display">
-                  {LINE_LABEL[line]} · {Math.round(lines[line])}
-                </div>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {byLine[line].length === 0 && (
-                    <span className="text-xs text-ink/40 italic">—</span>
-                  )}
-                  {byLine[line].map((e) => {
-                    const p = getPlayer(e.playerId);
-                    if (!p) return null;
-                    const coef = positionCoefficient(e.assignedPosition, [
-                      p.position,
-                      ...p.secondaryPositions,
-                    ]);
-                    const active = selectedStarter === e.playerId;
-                    return (
-                      <button
-                        key={e.playerId}
-                        onClick={() =>
-                          setSelectedStarter(active ? null : e.playerId)
-                        }
-                        className={`panini retro-card px-1.5 py-1.5 text-center w-[4.5rem] sm:w-24 transition ${
-                          active ? "ring-4 ring-gold" : ""
-                        }`}
-                      >
-                        <div className="font-display font-bold text-base leading-none">
-                          {p.overall}
-                        </div>
-                        <div className="text-[11px] truncate">{shortName(p.name)}</div>
-                        <div
-                          className={`text-[10px] ${
-                            coef < 1 ? "text-retro font-semibold" : "text-ink/50"
-                          }`}
-                        >
-                          {e.assignedPosition}
-                          {coef < 1 && ` ${Math.round(coef * 100)}%`}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <span
+                key={line}
+                className="text-[11px] font-display border border-ink/30 rounded px-2 py-0.5 bg-paper"
+              >
+                {LINE_LABEL[line]} <strong>{Math.round(lines[line])}</strong>
+              </span>
             ))}
           </div>
           {selectedStarter && (
-            <p className="text-xs text-retro mt-4 text-center font-semibold">
-              Selectionnez un remplacant pour echanger.
+            <p className="text-xs text-retro mt-3 text-center font-semibold">
+              Selectionnez un remplacant (banc) pour echanger.
             </p>
           )}
         </section>

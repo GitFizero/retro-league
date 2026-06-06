@@ -141,9 +141,21 @@ export function Season() {
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {fixturesOf(lastPlayedMd).map((f) => {
-              const isHuman =
-                f.homeClubId === HUMAN_CLUB_ID ||
-                f.awayClubId === HUMAN_CLUB_ID;
+              const homeHuman = f.homeClubId === HUMAN_CLUB_ID;
+              const awayHuman = f.awayClubId === HUMAN_CLUB_ID;
+              const isHuman = homeHuman || awayHuman;
+              // Result from the human's perspective (W/N/D) for colouring.
+              let tone = "border-ink/20";
+              if (isHuman && f.homeScore != null && f.awayScore != null) {
+                const my = homeHuman ? f.homeScore : f.awayScore;
+                const opp = homeHuman ? f.awayScore : f.homeScore;
+                tone =
+                  my > opp
+                    ? "border-[#2f7d4f] bg-[#2f7d4f]/15 font-semibold"
+                    : my < opp
+                      ? "border-retro bg-retro/10 font-semibold"
+                      : "border-gold bg-gold/15 font-semibold";
+              }
               return (
                 <button
                   key={f.id}
@@ -151,9 +163,7 @@ export function Season() {
                     setLiveOpen(false);
                     setOpenFixture(f);
                   }}
-                  className={`shrink-0 px-2 py-1 rounded-sm border text-xs whitespace-nowrap hover:-translate-y-0.5 transition-transform ${
-                    isHuman ? "border-gold bg-gold/15 font-semibold" : "border-ink/20"
-                  }`}
+                  className={`shrink-0 px-2 py-1 rounded-sm border text-xs whitespace-nowrap hover:-translate-y-0.5 transition-transform ${tone}`}
                   title={`${clubName(f.homeClubId)} vs ${clubName(f.awayClubId)}`}
                 >
                   {clubName(f.homeClubId).slice(0, 12)}{" "}
