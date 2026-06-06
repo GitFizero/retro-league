@@ -5,7 +5,24 @@ import { Shell, NewLeagueButton } from "@/components/Shell";
 import { MatchModal } from "@/components/MatchModal";
 import { useGame, HUMAN_CLUB_ID } from "@/lib/store";
 import { computeStandings, totalMatchdays } from "@/lib/engine/fixtures";
+import { getPlayer } from "@/lib/content/teams";
+import { shortName } from "@/lib/format";
 import type { Fixture } from "@/lib/types";
+
+/** Scorer lines for a club in a fixture, e.g. ["Benzema 12' 45'", "Govou 80'"]. */
+function scorers(f: Fixture, clubId: string): string[] {
+  const byName = new Map<string, number[]>();
+  for (const e of f.events) {
+    if ((e.type !== "goal" && e.type !== "legendary") || e.clubId !== clubId || !e.playerId)
+      continue;
+    const nm = shortName(getPlayer(e.playerId)?.name ?? "?");
+    if (!byName.has(nm)) byName.set(nm, []);
+    byName.get(nm)!.push(e.minute);
+  }
+  return [...byName.entries()].map(
+    ([nm, mins]) => `${nm} ${mins.sort((a, b) => a - b).map((m) => `${m}'`).join(" ")}`
+  );
+}
 
 const SPEEDS = { Lent: 600, Normal: 260, Rapide: 80 } as const;
 type SpeedName = keyof typeof SPEEDS;
@@ -290,6 +307,8 @@ export function Season() {
                 f.homeClubId === HUMAN_CLUB_ID ||
                 f.awayClubId === HUMAN_CLUB_ID;
               const played = f.status === "played";
+              const homeScorers = played ? scorers(f, f.homeClubId) : [];
+              const awayScorers = played ? scorers(f, f.awayClubId) : [];
               return (
                 <button
                   key={f.id}
@@ -300,19 +319,35 @@ export function Season() {
                       setOpenFixture(f);
                     }
                   }}
-                  className={`retro-card p-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-sm ${
+                  className={`retro-card p-3 text-sm ${
                     isHuman ? "ring-2 ring-gold" : ""
                   } ${played ? "hover:-translate-y-0.5" : "opacity-70"}`}
                 >
-                  <span className="text-right truncate">
-                    {clubName(f.homeClubId)}
-                  </span>
-                  <span className="font-display font-bold bg-ink text-paper px-2 py-0.5 rounded-sm">
-                    {played ? `${f.homeScore}-${f.awayScore}` : "vs"}
-                  </span>
-                  <span className="text-left truncate">
-                    {clubName(f.awayClubId)}
-                  </span>
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                    <span className="text-right truncate">
+                      {clubName(f.homeClubId)}
+                    </span>
+                    <span className="font-display font-bold bg-ink text-paper px-2 py-0.5 rounded-sm">
+                      {played ? `${f.homeScore}-${f.awayScore}` : "vs"}
+                    </span>
+                    <span className="text-left truncate">
+                      {clubName(f.awayClubId)}
+                    </span>
+                  </div>
+                  {played && (homeScorers.length > 0 || awayScorers.length > 0) && (
+                    <div className="grid grid-cols-2 gap-2 mt-2 text-[10px] text-ink/55 leading-tight">
+                      <span className="text-right">
+                        {homeScorers.map((s, i) => (
+                          <span key={i} className="block truncate">⚽ {s}</span>
+                        ))}
+                      </span>
+                      <span className="text-left">
+                        {awayScorers.map((s, i) => (
+                          <span key={i} className="block truncate">⚽ {s}</span>
+                        ))}
+                      </span>
+                    </div>
+                  )}
                 </button>
               );
             })}
