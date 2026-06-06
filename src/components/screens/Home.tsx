@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Shell, SupportLink } from "@/components/Shell";
 import { useGame } from "@/lib/store";
 import { useChallenge } from "@/lib/challenge";
-import { ALL_FORMATIONS } from "@/lib/engine/positions";
+import { Pitch, type PitchSlot } from "@/components/Pitch";
+import { ALL_FORMATIONS, FORMATIONS } from "@/lib/engine/positions";
 import type {
   FormationName,
   HistoricalDepth,
@@ -29,7 +30,7 @@ export function Home() {
   const [difficulty, setDifficulty] = useState<"normal" | "easy">("normal");
   const [formation, setFormation] = useState<FormationName>("4-4-2");
   const [withSubs, setWithSubs] = useState(false);
-  const [clubPool, setClubPool] = useState<"all" | "top10">("all");
+  const [clubPool, setClubPool] = useState<"all" | "top10">("top10");
   const [mercatoEnabled, setMercatoEnabled] = useState(true);
 
   // Jeu solo : un championnat complet, tous les adversaires geres par l'IA.
@@ -185,6 +186,14 @@ export function Home() {
                 </option>
               ))}
             </select>
+            <div className="max-w-[190px] mx-auto mt-3">
+              <Pitch
+                slots={FORMATIONS[formation].slots.map((pos, i) => ({
+                  key: `${pos}_${i}`,
+                  position: pos,
+                }) as PitchSlot)}
+              />
+            </div>
           </Field>
 
           <Field label="Clubs proposes a la roue">
