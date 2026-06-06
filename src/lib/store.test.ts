@@ -122,16 +122,32 @@ describe("game store — full loop & multi-season", () => {
     const human = before.humanClub()!;
     const ai = before.league!.clubs.find((c) => c.id !== HUMAN_CLUB_ID)!;
 
-    // Offer our worst player for their best — the AI must refuse.
+    // Trading UP (give a strictly weaker player, ask a strictly stronger one)
+    // must be refused.
     const myWorst = [...human.squad].sort(
       (a, b) => overallOf(a) - overallOf(b)
     )[0];
-    const theirBest = [...ai.squad].sort(
+    const strictlyBetter = ai.squad
+      .filter((id) => overallOf(id) > overallOf(myWorst))
+      .sort((a, b) => overallOf(b) - overallOf(a))[0];
+    if (strictlyBetter) {
+      expect(
+        useGame.getState().proposeTrade(ai.id, [myWorst], [strictlyBetter])
+          .accepted
+      ).toBe(false);
+    }
+
+    // Over-paying (give a stronger player for a weaker one) is accepted.
+    const myBest = [...human.squad].sort(
       (a, b) => overallOf(b) - overallOf(a)
     )[0];
-    const bad = useGame
-      .getState()
-      .proposeTrade(ai.id, [myWorst], [theirBest]);
-    expect(bad.accepted).toBe(false);
+    const theirWeaker = ai.squad
+      .filter((id) => overallOf(id) < overallOf(myBest))
+      .sort((a, b) => overallOf(a) - overallOf(b))[0];
+    if (theirWeaker) {
+      expect(
+        useGame.getState().proposeTrade(ai.id, [myBest], [theirWeaker]).accepted
+      ).toBe(true);
+    }
   });
 });

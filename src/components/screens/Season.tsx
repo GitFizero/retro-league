@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { Shell, NewLeagueButton } from "@/components/Shell";
 import { MatchModal } from "@/components/MatchModal";
 import { useGame, HUMAN_CLUB_ID } from "@/lib/store";
@@ -8,6 +9,10 @@ import { computeStandings, totalMatchdays } from "@/lib/engine/fixtures";
 import { getPlayer } from "@/lib/content/teams";
 import { shortName } from "@/lib/format";
 import type { Fixture } from "@/lib/types";
+
+// Cadence par journee jouee (ms). Le live se savoure ; "Tout simuler" pour zapper.
+const SPEEDS = { Lent: 4500, Normal: 3000, Rapide: 1200 } as const;
+type SpeedName = keyof typeof SPEEDS;
 
 /** Scorer lines for a club in a fixture, e.g. ["Benzema 12' 45'", "Govou 80'"]. */
 function scorers(f: Fixture, clubId: string): string[] {
@@ -24,13 +29,8 @@ function scorers(f: Fixture, clubId: string): string[] {
   );
 }
 
-const SPEEDS = { Lent: 600, Normal: 260, Rapide: 80 } as const;
-type SpeedName = keyof typeof SPEEDS;
-
 export function Season() {
   const league = useGame((s) => s.league);
-  // Derive standings locally (memoised on the league) — selecting s.standings()
-  // returns a fresh array every render, which makes useSyncExternalStore loop.
   const standings = useMemo(
     () => (league ? computeStandings(league.clubs, league.fixtures) : []),
     [league]
@@ -39,19 +39,16 @@ export function Season() {
   const simulateRest = useGame((s) => s.simulateRestOfSeason);
   const seasonNumber = useGame((s) => s.seasonNumber);
   const news = useGame((s) => s.news);
-  const [tab, setTab] = useState<"standings" | "results" | "news">("standings");
+  const [tab, setTab] = useState<"direct" | "calendrier" | "faits">("direct");
   const [openFixture, setOpenFixture] = useState<Fixture | null>(null);
   const [liveOpen, setLiveOpen] = useState(false);
   const [viewMd, setViewMd] = useState<number | null>(null);
-  // Auto-play : enchaine les journees tout seul (defaut en mode rapide), le
-  // classement se reajuste en direct. Pause/reprise a la volee.
   const [auto, setAuto] = useState(league?.simulationMode === "rapide");
   const [speed, setSpeed] = useState<SpeedName>("Normal");
 
   const total = league ? totalMatchdays(league.clubs.length) : 0;
   const seasonOver = league ? league.currentMatchday > total : false;
 
-  // The auto-play loop: one matchday per tick while running.
   useEffect(() => {
     if (!auto || !league || league.status !== "season") return;
     if (league.currentMatchday > total) return;
@@ -59,29 +56,9 @@ export function Season() {
     return () => clearTimeout(id);
   }, [auto, league, total, speed]);
 
-  const playAndWatch = () => {
-    const playedMd = league?.currentMatchday ?? 1;
-    playMatchday();
-    setViewMd(null);
-    const fresh = useGame.getState().league;
-    if (!fresh || fresh.status !== "season") return;
-    const mine = fresh.fixtures.find(
-      (f) =>
-        f.matchday === playedMd &&
-        f.status === "played" &&
-        (f.homeClubId === HUMAN_CLUB_ID || f.awayClubId === HUMAN_CLUB_ID)
-    );
-    if (mine) {
-      setOpenFixture(mine);
-      setLiveOpen(true);
-    }
-  };
-
   if (!league) return null;
   const md = Math.min(league.currentMatchday, total);
   const shownMd = viewMd ?? md;
-  const lastPlayedMd = Math.min(league.currentMatchday - 1, total);
-
   const clubName = (id: string) =>
     league.clubs.find((c) => c.id === id)?.name ?? id;
 
@@ -96,6 +73,24 @@ export function Season() {
             : 0
       );
 
+  // Live feed: the human's played matches, newest first (they rise into view).
+  const humanFeed = league.fixtures
+    .filter(
+      (f) =>
+        f.status === "played" &&
+        (f.homeClubId === HUMAN_CLUB_ID || f.awayClubId === HUMAN_CLUB_ID)
+    )
+    .sort((a, b) => b.matchday - a.matchday);
+
+  const resultTone = (f: Fixture) => {
+    const homeHuman = f.homeClubId === HUMAN_CLUB_ID;
+    const my = homeHuman ? f.homeScore! : f.awayScore!;
+    const opp = homeHuman ? f.awayScore! : f.homeScore!;
+    if (my > opp) return { letter: "V", color: "#2f7d4f" };
+    if (my < opp) return { letter: "D", color: "#C4122F" };
+    return { letter: "N", color: "#C9A64D" };
+  };
+
   return (
     <Shell subtitle={`${league.name} — Saison ${seasonNumber}`}>
       <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
@@ -108,10 +103,10 @@ export function Season() {
               className={`retro-btn text-sm ${auto ? "retro-btn-gold" : "retro-btn-primary"}`}
               onClick={() => setAuto((a) => !a)}
             >
-              {auto ? "⏸ Pause" : "▶ Lancer la saison"}
+              {auto ? "⏸ Pause" : "▶ Lancer"}
             </button>
           )}
-          {!seasonOver && auto && (
+          {!seasonOver && (
             <div className="flex gap-1">
               {(Object.keys(SPEEDS) as SpeedName[]).map((s) => (
                 <button
@@ -125,14 +120,6 @@ export function Season() {
                 </button>
               ))}
             </div>
-          )}
-          {!seasonOver && !auto && (
-            <button
-              className="retro-btn retro-btn-primary text-sm"
-              onClick={playAndWatch}
-            >
-              Jouer la journee
-            </button>
           )}
           {!seasonOver && (
             <button
@@ -150,209 +137,192 @@ export function Season() {
         </div>
       </div>
 
-      {/* Bandeau resultats de la derniere journee jouee (live). */}
-      {lastPlayedMd >= 1 && (
-        <div className="retro-card p-2 mb-4">
-          <div className="text-[10px] uppercase tracking-wide text-ink/50 mb-1 px-1">
-            Resultats — Journee {lastPlayedMd}
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {fixturesOf(lastPlayedMd).map((f) => {
-              const homeHuman = f.homeClubId === HUMAN_CLUB_ID;
-              const awayHuman = f.awayClubId === HUMAN_CLUB_ID;
-              const isHuman = homeHuman || awayHuman;
-              // Result from the human's perspective (W/N/D) for colouring.
-              let tone = "border-ink/20";
-              if (isHuman && f.homeScore != null && f.awayScore != null) {
-                const my = homeHuman ? f.homeScore : f.awayScore;
-                const opp = homeHuman ? f.awayScore : f.homeScore;
-                tone =
-                  my > opp
-                    ? "border-[#2f7d4f] bg-[#2f7d4f]/15 font-semibold"
-                    : my < opp
-                      ? "border-retro bg-retro/10 font-semibold"
-                      : "border-gold bg-gold/15 font-semibold";
-              }
-              return (
-                <button
-                  key={f.id}
-                  onClick={() => {
-                    setLiveOpen(false);
-                    setOpenFixture(f);
-                  }}
-                  className={`shrink-0 px-2 py-1 rounded-sm border text-xs whitespace-nowrap hover:-translate-y-0.5 transition-transform ${tone}`}
-                  title={`${clubName(f.homeClubId)} vs ${clubName(f.awayClubId)}`}
-                >
-                  {clubName(f.homeClubId).slice(0, 12)}{" "}
-                  <span className="font-display font-bold">
-                    {f.homeScore}-{f.awayScore}
-                  </span>{" "}
-                  {clubName(f.awayClubId).slice(0, 12)}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       <div className="flex gap-2 mb-4">
-        <Tab active={tab === "standings"} onClick={() => setTab("standings")}>
-          Classement
+        <Tab active={tab === "direct"} onClick={() => setTab("direct")}>
+          En direct
         </Tab>
-        <Tab active={tab === "results"} onClick={() => setTab("results")}>
+        <Tab active={tab === "calendrier"} onClick={() => setTab("calendrier")}>
           Calendrier
         </Tab>
-        <Tab active={tab === "news"} onClick={() => setTab("news")}>
+        <Tab active={tab === "faits"} onClick={() => setTab("faits")}>
           Faits Divers{news.length > 0 ? ` (${news.length})` : ""}
         </Tab>
       </div>
 
-      {tab === "news" && (
-        <div className="space-y-2">
-          {news.length === 0 ? (
-            <p className="text-sm text-ink/55 italic">
-              Rien a signaler pour l&apos;instant.
-            </p>
-          ) : (
-            news.map((n) => (
-              <div key={n.id} className="retro-card p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-display font-bold text-retro text-sm">
-                    {n.title}
-                  </span>
-                  <span className="text-[10px] uppercase tracking-wide text-ink/50">
-                    J{n.matchday} · {n.clubName}
-                  </span>
-                </div>
-                <p className="text-sm text-ink/80 mt-1">{n.text}</p>
+      <div className="grid lg:grid-cols-[1fr_300px] gap-5">
+        {/* ---- MAIN (≈80%) ---- */}
+        <div className="min-w-0">
+          {tab === "direct" && (
+            <div className="space-y-3">
+              {humanFeed.length === 0 && (
+                <p className="text-sm text-ink/55 italic">
+                  Lance la saison pour voir tes resultats s&apos;afficher ici.
+                </p>
+              )}
+              {humanFeed.map((f) => {
+                const t = resultTone(f);
+                const homeScorers = scorers(f, f.homeClubId);
+                const awayScorers = scorers(f, f.awayClubId);
+                return (
+                  <motion.button
+                    key={f.id}
+                    layout
+                    initial={{ opacity: 0, y: 34, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.45, ease: "easeOut" }}
+                    onClick={() => {
+                      setLiveOpen(false);
+                      setOpenFixture(f);
+                    }}
+                    className="retro-card w-full text-left p-4 flex items-center gap-4 hover:-translate-y-0.5"
+                  >
+                    <span
+                      className="shrink-0 grid place-items-center w-10 h-10 rounded-sm font-display font-black text-white text-lg"
+                      style={{ backgroundColor: t.color }}
+                    >
+                      {t.letter}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[10px] uppercase tracking-wide text-ink/45">
+                        Journee {f.matchday}
+                      </div>
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                        <span className={`truncate text-right ${f.homeClubId === HUMAN_CLUB_ID ? "font-bold" : ""}`}>
+                          {clubName(f.homeClubId)}
+                        </span>
+                        <span className="font-display font-black text-xl">
+                          {f.homeScore} - {f.awayScore}
+                        </span>
+                        <span className={`truncate ${f.awayClubId === HUMAN_CLUB_ID ? "font-bold" : ""}`}>
+                          {clubName(f.awayClubId)}
+                        </span>
+                      </div>
+                      {(homeScorers.length > 0 || awayScorers.length > 0) && (
+                        <div className="grid grid-cols-2 gap-2 mt-1 text-[10px] text-ink/55 leading-tight">
+                          <span className="text-right">
+                            {homeScorers.map((s, i) => (
+                              <span key={i} className="block truncate">⚽ {s}</span>
+                            ))}
+                          </span>
+                          <span className="text-left">
+                            {awayScorers.map((s, i) => (
+                              <span key={i} className="block truncate">⚽ {s}</span>
+                            ))}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+          )}
+
+          {tab === "calendrier" && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <button
+                  className="retro-btn text-xs"
+                  disabled={shownMd <= 1}
+                  onClick={() => setViewMd(Math.max(1, shownMd - 1))}
+                >
+                  ←
+                </button>
+                <span className="font-display font-bold">Journee {shownMd}</span>
+                <button
+                  className="retro-btn text-xs"
+                  disabled={shownMd >= total}
+                  onClick={() => setViewMd(Math.min(total, shownMd + 1))}
+                >
+                  →
+                </button>
               </div>
-            ))
+              <div className="grid sm:grid-cols-2 gap-2">
+                {fixturesOf(shownMd).map((f) => {
+                  const isHuman =
+                    f.homeClubId === HUMAN_CLUB_ID || f.awayClubId === HUMAN_CLUB_ID;
+                  const played = f.status === "played";
+                  return (
+                    <button
+                      key={f.id}
+                      disabled={!played}
+                      onClick={() => {
+                        if (played) {
+                          setLiveOpen(false);
+                          setOpenFixture(f);
+                        }
+                      }}
+                      className={`retro-card p-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-sm ${
+                        isHuman ? "ring-2 ring-gold" : ""
+                      } ${played ? "hover:-translate-y-0.5" : "opacity-70"}`}
+                    >
+                      <span className="text-right truncate">{clubName(f.homeClubId)}</span>
+                      <span className="font-display font-bold bg-ink text-paper px-2 py-0.5 rounded-sm">
+                        {played ? `${f.homeScore}-${f.awayScore}` : "vs"}
+                      </span>
+                      <span className="text-left truncate">{clubName(f.awayClubId)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {tab === "faits" && (
+            <div className="space-y-2">
+              {news.length === 0 ? (
+                <p className="text-sm text-ink/55 italic">
+                  Rien a signaler pour l&apos;instant.
+                </p>
+              ) : (
+                news.map((n) => (
+                  <div key={n.id} className="retro-card p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-display font-bold text-retro text-sm">
+                        {n.title}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-wide text-ink/50">
+                        J{n.matchday} · {n.clubName}
+                      </span>
+                    </div>
+                    <p className="text-sm text-ink/80 mt-1">{n.text}</p>
+                  </div>
+                ))
+              )}
+            </div>
           )}
         </div>
-      )}
 
-      {tab === "standings" && (
-        <div className="retro-card p-4 overflow-x-auto">
-          <table className="ledger">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Club</th>
-                <th>J</th>
-                <th>G</th>
-                <th>N</th>
-                <th>P</th>
-                <th>BP</th>
-                <th>BC</th>
-                <th>Diff</th>
-                <th>Pts</th>
-              </tr>
-            </thead>
+        {/* ---- STANDINGS (right, smaller, live) ---- */}
+        <aside className="retro-card p-3 h-fit lg:sticky lg:top-4 overflow-x-auto">
+          <h3 className="font-display font-bold uppercase text-xs tracking-wide border-b-2 border-ink/30 pb-2 mb-2">
+            Classement
+          </h3>
+          <table className="w-full text-xs">
             <tbody>
               {standings.map((row, i) => (
                 <tr
                   key={row.clubId}
                   className={
                     row.clubId === HUMAN_CLUB_ID
-                      ? "bg-gold/20 font-semibold"
-                      : ""
+                      ? "bg-gold/25 font-bold"
+                      : i % 2
+                        ? "bg-paper-dark/40"
+                        : ""
                   }
                 >
-                  <td>{i + 1}</td>
-                  <td>{row.clubName}</td>
-                  <td>{row.played}</td>
-                  <td>{row.won}</td>
-                  <td>{row.drawn}</td>
-                  <td>{row.lost}</td>
-                  <td>{row.goalsFor}</td>
-                  <td>{row.goalsAgainst}</td>
-                  <td>
-                    {row.goalDifference > 0 ? "+" : ""}
-                    {row.goalDifference}
-                  </td>
-                  <td className="font-display font-bold text-retro">
+                  <td className="py-1 pl-1 pr-1 text-ink/50 tabular-nums">{i + 1}</td>
+                  <td className="py-1 pr-1 truncate max-w-[150px]">{row.clubName}</td>
+                  <td className="py-1 pr-1 text-center text-ink/50">{row.played}</td>
+                  <td className="py-1 pr-1 text-right font-display font-bold text-retro">
                     {row.points}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {tab === "results" && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <button
-              className="retro-btn text-xs"
-              disabled={shownMd <= 1}
-              onClick={() => setViewMd(Math.max(1, shownMd - 1))}
-            >
-              ←
-            </button>
-            <span className="font-display font-bold">Journee {shownMd}</span>
-            <button
-              className="retro-btn text-xs"
-              disabled={shownMd >= total}
-              onClick={() => setViewMd(Math.min(total, shownMd + 1))}
-            >
-              →
-            </button>
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-2">
-            {fixturesOf(shownMd).map((f) => {
-              const isHuman =
-                f.homeClubId === HUMAN_CLUB_ID ||
-                f.awayClubId === HUMAN_CLUB_ID;
-              const played = f.status === "played";
-              const homeScorers = played ? scorers(f, f.homeClubId) : [];
-              const awayScorers = played ? scorers(f, f.awayClubId) : [];
-              return (
-                <button
-                  key={f.id}
-                  disabled={!played}
-                  onClick={() => {
-                    if (played) {
-                      setLiveOpen(false);
-                      setOpenFixture(f);
-                    }
-                  }}
-                  className={`retro-card p-3 text-sm ${
-                    isHuman ? "ring-2 ring-gold" : ""
-                  } ${played ? "hover:-translate-y-0.5" : "opacity-70"}`}
-                >
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                    <span className="text-right truncate">
-                      {clubName(f.homeClubId)}
-                    </span>
-                    <span className="font-display font-bold bg-ink text-paper px-2 py-0.5 rounded-sm">
-                      {played ? `${f.homeScore}-${f.awayScore}` : "vs"}
-                    </span>
-                    <span className="text-left truncate">
-                      {clubName(f.awayClubId)}
-                    </span>
-                  </div>
-                  {played && (homeScorers.length > 0 || awayScorers.length > 0) && (
-                    <div className="grid grid-cols-2 gap-2 mt-2 text-[10px] text-ink/55 leading-tight">
-                      <span className="text-right">
-                        {homeScorers.map((s, i) => (
-                          <span key={i} className="block truncate">⚽ {s}</span>
-                        ))}
-                      </span>
-                      <span className="text-left">
-                        {awayScorers.map((s, i) => (
-                          <span key={i} className="block truncate">⚽ {s}</span>
-                        ))}
-                      </span>
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+        </aside>
+      </div>
 
       {openFixture && (
         <MatchModal
