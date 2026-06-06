@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { shortName } from "@/lib/format";
-import { Shell } from "@/components/Shell";
+import { Shell, SupportLink } from "@/components/Shell";
 import { computeStandings } from "@/lib/engine/fixtures";
 import {
   useGame,
@@ -193,6 +193,7 @@ export function HallOfFame() {
         <button className="retro-btn retro-btn-gold" onClick={shareBilan}>
           📤 Partager le bilan
         </button>
+        <SupportLink variant="button" />
         <button
           className="retro-btn retro-btn-primary"
           onClick={() => nextSeason()}
