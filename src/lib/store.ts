@@ -67,6 +67,8 @@ export interface CreateLeagueInput {
   withSubs: boolean;
   /** Vivier de clubs propose a la roue. */
   clubPool: ClubPool;
+  /** Pause mercato a la mi-saison (echanges + departs). */
+  mercatoEnabled: boolean;
 }
 
 export const REROLLS: Record<Difficulty, number> = { normal: 0, easy: 3 };
@@ -227,6 +229,7 @@ export const useGame = create<GameState>()(
           historicalDepth: input.historicalDepth,
           clubPool: input.clubPool,
           withSubs: input.withSubs,
+          mercatoEnabled: input.mercatoEnabled,
           status: "draft",
           currentMatchday: 1,
           clubs,
@@ -410,9 +413,13 @@ export const useGame = create<GameState>()(
           const off = applyOffPitch(league);
           league = off.league;
           collected = [...off.news, ...collected].slice(0, 50);
-          // Honour the mercato pause even in rapide mode.
+          // Honour the mercato pause even in rapide mode (when enabled).
           const half = Math.floor(total / 2);
-          if (!get().mercatoDone && league.currentMatchday > half) {
+          if (
+            league.mercatoEnabled &&
+            !get().mercatoDone &&
+            league.currentMatchday > half
+          ) {
             set({ league, news: collected });
             maybeOpenMercato(get, set);
             return;
@@ -715,6 +722,7 @@ function maybeOpenMercato(
 ): void {
   const { league, mercatoDone } = get();
   if (!league || mercatoDone || league.status === "finished") return;
+  if (!league.mercatoEnabled) return; // mercato desactive dans les options
   const total = totalMatchdays(league.clubs.length);
   const half = Math.floor(total / 2);
   if (league.currentMatchday <= half) return;

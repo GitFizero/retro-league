@@ -30,6 +30,7 @@ export function Home() {
   const [formation, setFormation] = useState<FormationName>("4-4-2");
   const [withSubs, setWithSubs] = useState(false);
   const [clubPool, setClubPool] = useState<"all" | "top10">("all");
+  const [mercatoEnabled, setMercatoEnabled] = useState(true);
 
   // Jeu solo : un championnat complet, tous les adversaires geres par l'IA.
   const CLUB_COUNT = 18;
@@ -103,6 +104,7 @@ export function Home() {
               formation,
               withSubs,
               clubPool,
+              mercatoEnabled,
             });
           }}
         >
@@ -215,6 +217,23 @@ export function Home() {
                 onClick={() => setWithSubs(false)}
                 title="XI seul"
                 desc="11 titulaires"
+              />
+            </div>
+          </Field>
+
+          <Field label="Mercato (mi-saison)">
+            <div className="flex gap-2">
+              <ModeBtn
+                active={mercatoEnabled}
+                onClick={() => setMercatoEnabled(true)}
+                title="Active"
+                desc="Echanges a la mi-saison"
+              />
+              <ModeBtn
+                active={!mercatoEnabled}
+                onClick={() => setMercatoEnabled(false)}
+                title="Desactive"
+                desc="Saison sans interruption"
               />
             </div>
           </Field>

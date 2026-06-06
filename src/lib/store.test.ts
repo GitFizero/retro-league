@@ -53,6 +53,7 @@ describe("game store — full loop & multi-season", () => {
       formation: "4-4-2",
       withSubs: true,
       clubPool: "all",
+      mercatoEnabled: true,
     });
     expect(useGame.getState().league?.status).toBe("draft");
 
@@ -79,6 +80,7 @@ describe("game store — full loop & multi-season", () => {
       formation: "4-4-2",
       withSubs: true,
       clubPool: "all",
+      mercatoEnabled: true,
     });
     autoDraft();
     useGame.getState().startSeason();
@@ -113,6 +115,7 @@ describe("game store — full loop & multi-season", () => {
       formation: "4-4-2",
       withSubs: true,
       clubPool: "all",
+      mercatoEnabled: true,
     });
     autoDraft();
     const before = useGame.getState();
