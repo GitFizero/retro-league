@@ -19,6 +19,7 @@ import {
   draftPickable,
   nextDraftStep,
   slotForPlayer,
+  fittingSlots,
 } from "@/lib/engine/formation-draft";
 import { ALL_FORMATIONS } from "@/lib/engine/positions";
 import {
@@ -42,6 +43,7 @@ import type {
   LineupEntry,
   NewsItem,
   Player,
+  Position,
   SimulationMode,
   StandingRow,
   TradeOffer,
@@ -92,7 +94,7 @@ interface GameState {
   news: NewsItem[];
 
   createLeague: (input: CreateLeagueInput) => void;
-  pickHumanPlayer: (playerId: string) => void;
+  pickHumanPlayer: (playerId: string, slot?: Position) => void;
   skipDraw: () => void;
 
   setFormation: (formation: FormationName) => void;
@@ -257,7 +259,7 @@ export const useGame = create<GameState>()(
         });
       },
 
-      pickHumanPlayer: (playerId) => {
+      pickHumanPlayer: (playerId, chosenSlot) => {
         const { league, humanDraw, draftSeed } = get();
         if (!league || !humanDraw) return;
         const human = league.clubs.find((c) => c.id === HUMAN_CLUB_ID);
@@ -269,8 +271,11 @@ export const useGame = create<GameState>()(
         const step = nextDraftStep(human, league.withSubs);
         let entry: LineupEntry;
         if (step.kind === "xi") {
-          // Formation-constrained: the player must fit a still-open slot.
-          const slot = slotForPlayer(player, step.remaining);
+          // Poste strict : le joueur ne tient QUE ses postes naturels. Si le
+          // joueur en a plusieurs ouverts, l'UI a passe le poste choisi.
+          const fits = fittingSlots(player, step.remaining);
+          const slot =
+            chosenSlot && fits.includes(chosenSlot) ? chosenSlot : fits[0];
           if (!slot) return; // poste deja complet — non selectionnable
           entry = { playerId, starter: true, assignedPosition: slot };
         } else if (step.kind === "bench") {
@@ -706,28 +711,14 @@ function applyOffPitch(league: League): { league: League; news: NewsItem[] } {
   if (md < 1) return { league, news: [] };
 
   const rng = new Rng(`${league.id}-news-${md}`);
-  const order = rng.shuffle(league.clubs.map((c) => c.id));
-  const clubsById = new Map(league.clubs.map((c) => [c.id, c]));
-  const fresh: NewsItem[] = [];
-  let applied = 0;
-
-  for (const id of order) {
-    if (applied >= 2) break;
-    const club = clubsById.get(id);
-    if (!club) continue;
-    const outcome = rollOffPitch(club, rng, md, 0.14);
-    if (outcome) {
-      clubsById.set(id, outcome.club);
-      fresh.push(outcome.news);
-      applied++;
-    }
-  }
-
-  if (fresh.length === 0) return { league, news: [] };
-  return {
-    league: { ...league, clubs: [...clubsById.values()] },
-    news: fresh,
-  };
+  // Beaucoup moins de faits divers : au plus 1 par journee, ~1 fois sur 3, pour
+  // un club au hasard. Ils ponctuent le direct entre deux resultats.
+  if (!rng.bool(0.33)) return { league, news: [] };
+  const club = rng.pick(league.clubs);
+  const outcome = rollOffPitch(club, rng, md, 1);
+  if (!outcome) return { league, news: [] };
+  const clubs = league.clubs.map((c) => (c.id === club.id ? outcome.club : c));
+  return { league: { ...league, clubs }, news: [outcome.news] };
 }
 
 function maybeOpenMercato(

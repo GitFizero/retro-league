@@ -58,30 +58,21 @@ export function remainingSlots(
 }
 
 /**
- * Best still-open slot the player can fill, else null.
- *
- * Hard rule (facon 38-0) : un joueur ne peut remplir qu'un poste de SA LIGNE
- * (gardien / defense / milieu / attaque). On garde la souplesse laterale a
- * l'interieur d'une ligne (un DC peut couvrir DD/DG) mais un attaquant ne
- * descend jamais au milieu : le nombre de joueurs par ligne colle donc
- * exactement a la formation choisie.
+ * Open slots the player can fill — STRICTEMENT son ou ses postes naturels.
+ * Un DC ne peut PAS jouer DD/DG : il faut que le joueur liste lui-meme le poste
+ * (poste principal ou secondaire). Pas de "poste proche".
  */
+export function fittingSlots(player: Player, remaining: Position[]): Position[] {
+  const own = new Set(positionsOf(player));
+  return [...new Set(remaining.filter((slot) => own.has(slot)))];
+}
+
+/** First open slot the player natively plays, else null. */
 export function slotForPlayer(
   player: Player,
   remaining: Position[]
 ): Position | null {
-  const playerLines = new Set(positionsOf(player).map((p) => SIM_LINE_OF[p]));
-  let best: Position | null = null;
-  let bestCoef = ELIGIBLE - 1e-6;
-  for (const slot of remaining) {
-    if (!playerLines.has(SIM_LINE_OF[slot])) continue; // ligne differente -> non
-    const c = slotCoefficient(player, slot);
-    if (c > bestCoef) {
-      bestCoef = c;
-      best = slot;
-    }
-  }
-  return best;
+  return fittingSlots(player, remaining)[0] ?? null;
 }
 
 export function isPickable(
