@@ -2,22 +2,21 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { getPlayer } from "@/lib/content/teams";
+import { getPlayer, playersOfTeam } from "@/lib/content/teams";
 import { unlockedAchievements, unlockedCollections } from "@/lib/content/collections";
 import {
-  AI_NAMES,
   PERSONALITIES,
   evaluateTradeForClub,
   proposeAiTrade,
   refreshAiLineup,
 } from "@/lib/engine/ai";
-import { autoLineup } from "@/lib/engine/composition";
+import { autoLineup, teamRating } from "@/lib/engine/composition";
 import {
   makeHumanDraw,
+  teamsForDepth,
   type DraftDraw,
 } from "@/lib/engine/draft";
 import {
-  aiDraftFormation,
   draftPickable,
   nextDraftStep,
   slotForPlayer,
@@ -143,13 +142,25 @@ function newDraw(
   return draw;
 }
 
-const AI_FORMATION: Record<string, FormationName> = {
-  offensive: "4-3-3",
-  conservatrice: "4-2-3-1",
-  collectionneur: "3-5-2",
-  equilibree: "4-4-2",
-};
+/** Strongest XI of a real squad across all formations (best teamRating). */
+function strongestLineup(squadIds: string[]): {
+  formation: FormationName;
+  lineup: ReturnType<typeof autoLineup>;
+} {
+  let best = { formation: "4-4-2" as FormationName, lineup: autoLineup(squadIds, "4-4-2"), rating: -1 };
+  for (const f of ALL_FORMATIONS) {
+    const lineup = autoLineup(squadIds, f.name);
+    const rating = teamRating(lineup);
+    if (rating > best.rating) best = { formation: f.name, lineup, rating };
+  }
+  return { formation: best.formation, lineup: best.lineup };
+}
 
+/**
+ * Les adversaires IA sont de VRAIS club-saisons historiques, intacts : l'effectif
+ * et la note d'epoque (ex. "Marseille 2010-11"). Le classement melange donc des
+ * club-saisons reels, coherents avec leurs notes globales.
+ */
 function buildAiClubs(
   count: number,
   depth: HistoricalDepth,
@@ -157,23 +168,14 @@ function buildAiClubs(
   pool: ClubPool
 ): Club[] {
   const rng = new Rng(seed);
-  const names = rng.shuffle(AI_NAMES).slice(0, count);
-  return names.map((name, i) => {
+  const teams = rng.shuffle(teamsForDepth(depth, pool)).slice(0, count);
+  return teams.map((team, i) => {
+    const squad = playersOfTeam(team.id).map((p) => p.id);
+    const { formation, lineup } = strongestLineup(squad);
     const personality = PERSONALITIES[i % PERSONALITIES.length];
-    // Each AI plays a formation that suits its personality.
-    const formation =
-      AI_FORMATION[personality] ??
-      ALL_FORMATIONS[i % ALL_FORMATIONS.length].name;
-    const { squad, lineup } = aiDraftFormation(
-      new Rng(seed + i * 7919 + 1),
-      depth,
-      personality,
-      formation,
-      pool
-    );
-    const base: Club = {
+    return {
       id: `ai_${i}`,
-      name,
+      name: `${team.clubName} ${team.season}`,
       isAI: true,
       personality,
       squad,
@@ -181,7 +183,6 @@ function buildAiClubs(
       formation,
       form: 0,
     };
-    return base;
   });
 }
 
