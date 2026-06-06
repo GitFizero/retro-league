@@ -1,12 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { shortName } from "@/lib/format";
 import { Shell, SupportLink } from "@/components/Shell";
 import { computeStandings } from "@/lib/engine/fixtures";
 import { teamRating, lineStrengths } from "@/lib/engine/composition";
 import { getPlayer } from "@/lib/content/teams";
 import { Pitch, type PitchSlot } from "@/components/Pitch";
+import { ShareCard } from "@/components/ShareCard";
+import { humanSeasonStats } from "@/lib/stats";
+import { shareNodeAsImage } from "@/lib/shareImage";
 import {
   useGame,
   HUMAN_CLUB_ID,
@@ -97,6 +100,25 @@ export function HallOfFame() {
         }))
     : [];
 
+  const stats = humanClub ? humanSeasonStats(league, HUMAN_CLUB_ID) : null;
+  const shareBadge =
+    humanRank === 1
+      ? "CHAMPION"
+      : humanRank <= 3
+        ? `PODIUM · ${humanRank}e`
+        : `${humanRank}e / ${standings.length}`;
+  const cardRef = useRef<HTMLDivElement>(null);
+  const shareImage = async () => {
+    if (!cardRef.current) return;
+    setShareMsg("Generation de l'image…");
+    const msg = await shareNodeAsImage(
+      cardRef.current,
+      `retro-league-${(humanClub?.name ?? "club").replace(/\s+/g, "-")}.png`
+    );
+    setShareMsg(msg);
+    setTimeout(() => setShareMsg(null), 6000);
+  };
+
   return (
     <Shell subtitle={`Hall of Fame — Saison ${seasonNumber} terminee`}>
       <div className="text-center mb-8">
@@ -183,7 +205,35 @@ export function HallOfFame() {
                 <Stat label="Pts" value={humanRow.points} />
                 <Stat label="BP" value={humanRow.goalsFor} />
                 <Stat label="BC" value={humanRow.goalsAgainst} />
+                {stats && (
+                  <Stat label="Clean sheets" value={stats.cleanSheets} />
+                )}
+                {stats && (
+                  <Stat
+                    label="Diff"
+                    value={`${stats.goalDifference > 0 ? "+" : ""}${stats.goalDifference}`}
+                  />
+                )}
               </div>
+              {stats && (
+                <div className="mt-3 text-sm text-ink/75 space-y-0.5">
+                  {stats.topScorer && (
+                    <p>
+                      ⚽ Meilleur buteur :{" "}
+                      <strong>{stats.topScorer.name}</strong> (
+                      {stats.topScorer.goals})
+                    </p>
+                  )}
+                  {stats.biggestWin && (
+                    <p>🏟️ Plus large victoire : {stats.biggestWin}</p>
+                  )}
+                  {stats.biggestDefeat && (
+                    <p className="text-ink/55">
+                      Plus lourde defaite : {stats.biggestDefeat}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -258,8 +308,11 @@ export function HallOfFame() {
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <button className="retro-btn retro-btn-gold" onClick={shareBilan}>
-          📤 Partager le bilan
+        <button className="retro-btn retro-btn-gold" onClick={shareImage}>
+          📸 Partager en image
+        </button>
+        <button className="retro-btn text-sm" onClick={shareBilan}>
+          🔗 Lien
         </button>
         <SupportLink variant="button" />
         <button
@@ -276,6 +329,41 @@ export function HallOfFame() {
           {shareMsg}
         </p>
       )}
+
+      {/* Carte partagée, rendue hors écran pour la capture PNG. */}
+      {stats && humanClub && (
+        <div
+          aria-hidden
+          style={{ position: "fixed", left: -10000, top: 0, pointerEvents: "none" }}
+        >
+          <ShareCard
+            ref={cardRef}
+            clubName={humanClub.name}
+            badge={shareBadge}
+            overall={stats.overall}
+            lineRatings={stats.lineRatings}
+            slots={humanXI}
+            formation={humanClub.formation}
+            stats={[
+              { label: "Points", value: stats.points },
+              { label: "V-N-D", value: `${stats.won}-${stats.drawn}-${stats.lost}` },
+              { label: "Buts", value: `${stats.goalsFor}:${stats.goalsAgainst}` },
+              {
+                label: "Diff",
+                value: `${stats.goalDifference > 0 ? "+" : ""}${stats.goalDifference}`,
+              },
+              { label: "Clean sheets", value: stats.cleanSheets },
+              { label: "Classement", value: `${stats.rank}/${stats.total}` },
+            ]}
+            notes={[
+              stats.topScorer
+                ? `Meilleur buteur : ${stats.topScorer.name} (${stats.topScorer.goals})`
+                : "",
+              stats.biggestWin ? `Plus large victoire : ${stats.biggestWin}` : "",
+            ].filter(Boolean)}
+          />
+        </div>
+      )}
     </Shell>
   );
 }
@@ -286,7 +374,7 @@ function Stat({
   tone,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   tone?: string;
 }) {
   return (
