@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { shortName } from "@/lib/format";
 import { Shell } from "@/components/Shell";
 import {
@@ -8,6 +9,7 @@ import {
   topScorers,
   hallOfFameAwards,
 } from "@/lib/store";
+import { buildSeasonReport, reportLink } from "@/lib/report";
 
 export function HallOfFame() {
   const league = useGame((s) => s.league);
@@ -17,8 +19,28 @@ export function HallOfFame() {
   const nextSeason = useGame((s) => s.nextSeason);
   const replaySeason = useGame((s) => s.replaySeason);
   const reset = useGame((s) => s.reset);
+  const [shareMsg, setShareMsg] = useState<string | null>(null);
 
   if (!league) return null;
+
+  const shareBilan = async () => {
+    const link = reportLink(buildSeasonReport(league, seasonNumber));
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Mon bilan Retro League", url: link });
+        return;
+      }
+    } catch {
+      // user cancelled share — fall through to clipboard
+    }
+    try {
+      await navigator.clipboard.writeText(link);
+      setShareMsg("Lien copie ! Envoie-le a tes amis.");
+    } catch {
+      setShareMsg(link);
+    }
+    setTimeout(() => setShareMsg(null), 4000);
+  };
 
   const champion = standings[0];
   const scorers = topScorers(league, 5);
@@ -162,6 +184,9 @@ export function HallOfFame() {
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <button className="retro-btn retro-btn-gold" onClick={shareBilan}>
+          📤 Partager le bilan
+        </button>
         <button
           className="retro-btn retro-btn-primary"
           onClick={() => nextSeason()}
@@ -184,6 +209,11 @@ export function HallOfFame() {
           Nouvelle ligue
         </button>
       </div>
+      {shareMsg && (
+        <p className="mt-3 text-center text-sm text-gold font-semibold break-all">
+          {shareMsg}
+        </p>
+      )}
     </Shell>
   );
 }

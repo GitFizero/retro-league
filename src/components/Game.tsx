@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useGame } from "@/lib/store";
 import { useChallenge } from "@/lib/challenge";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Bilan } from "@/components/screens/Bilan";
+import { readReportFromHash } from "@/lib/report";
 import { Home } from "@/components/screens/Home";
 import { Draft } from "@/components/screens/Draft";
 import { Composition } from "@/components/screens/Composition";
@@ -26,6 +28,17 @@ export function Game() {
           RETRO LEAGUE
         </div>
       </div>
+    );
+  }
+
+  // Lien de bilan partage (#bilan=...) : on affiche la page bilan en lecture
+  // seule, avant tout le reste.
+  const shared = readReportFromHash();
+  if (shared) {
+    return (
+      <ErrorBoundary>
+        <Bilan report={shared} shared />
+      </ErrorBoundary>
     );
   }
 
