@@ -161,6 +161,8 @@ export interface League {
   withSubs: boolean;
   /** Mid-season mercato pause (trades + departures) when true. */
   mercatoEnabled: boolean;
+  /** Max players per side in a mercato trade (1-3, random per game). */
+  maxTradeSize: number;
   status: LeagueStatus;
   currentMatchday: number;
   clubs: Club[];

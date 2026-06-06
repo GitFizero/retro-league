@@ -5,10 +5,34 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Shell } from "@/components/Shell";
 import { PlayerCard } from "@/components/PlayerCard";
+import { Pitch, type PitchSlot } from "@/components/Pitch";
 import { MatchModal } from "@/components/MatchModal";
 import { useChallenge, CHALLENGE_XI } from "@/lib/challenge";
 import { HISTORICAL_TEAMS, getPlayer } from "@/lib/content/teams";
+import { autoLineup, byPosition } from "@/lib/engine/composition";
+import { FORMATIONS } from "@/lib/engine/positions";
 import type { Club } from "@/lib/types";
+
+/** Build pitch slots (filled + empty) from a free-draft XI in a 4-4-2 preview. */
+function challengePitchSlots(xi: string[]): PitchSlot[] {
+  const form = "4-4-2" as const;
+  const starters = autoLineup(xi, form).filter((e) => e.starter);
+  const filled: PitchSlot[] = starters.map((e) => ({
+    key: e.playerId,
+    position: e.assignedPosition,
+    player: getPlayer(e.playerId),
+  }));
+  const left = [...FORMATIONS[form].slots];
+  for (const e of starters) {
+    const i = left.indexOf(e.assignedPosition);
+    if (i >= 0) left.splice(i, 1);
+  }
+  const empty: PitchSlot[] = left.map((pos, i) => ({
+    key: `empty_${i}_${pos}`,
+    position: pos,
+  }));
+  return [...filled, ...empty];
+}
 
 export function Challenge() {
   const phase = useChallenge((s) => s.phase);
@@ -133,7 +157,7 @@ function ChallengeDraft() {
                     Choisis UN joueur
                   </p>
                   <div className="grid sm:grid-cols-2 gap-3">
-                    {draw.players.map((p) => (
+                    {[...draw.players].sort(byPosition).map((p) => (
                       <PlayerCard
                         key={p.id}
                         player={p}
@@ -147,7 +171,7 @@ function ChallengeDraft() {
                     </button>
                   ) : (
                     <p className="mt-5 text-xs text-ink/50 italic">
-                      Mode normal : pas de reroll. Assume ton tirage.
+                      Mode normal : pas de reroll.
                     </p>
                   )}
                 </>
@@ -156,27 +180,9 @@ function ChallengeDraft() {
 
             <aside className="retro-card p-4 h-fit lg:sticky lg:top-4">
               <h3 className="font-display font-bold uppercase text-sm tracking-wide border-b-2 border-ink/30 pb-2 mb-3">
-                Ton XI
+                Ton XI ({xi.length}/{CHALLENGE_XI})
               </h3>
-              {xi.length === 0 ? (
-                <p className="text-sm text-ink/55 italic">
-                  Fais tourner la roue et compose ton equipe de reve.
-                </p>
-              ) : (
-                <ul className="space-y-1 text-sm">
-                  {xi
-                    .map(getPlayer)
-                    .filter((p): p is NonNullable<typeof p> => Boolean(p))
-                    .map((p) => (
-                      <li key={p.id} className="flex justify-between gap-2">
-                        <span className="truncate">{shortName(p.name)}</span>
-                        <span className="text-ink/50 text-xs shrink-0">
-                          {p.position} · {p.overall}
-                        </span>
-                      </li>
-                    ))}
-                </ul>
-              )}
+              <Pitch slots={challengePitchSlots(xi)} formation="4-4-2" />
             </aside>
           </div>
         )

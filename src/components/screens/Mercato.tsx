@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Shell } from "@/components/Shell";
 import { useGame, HUMAN_CLUB_ID } from "@/lib/store";
 import { getPlayer } from "@/lib/content/teams";
+import { byPosition } from "@/lib/engine/composition";
 import type { Player } from "@/lib/types";
 
 export function Mercato() {
@@ -18,20 +19,41 @@ export function Mercato() {
 
   const aiClubs = (league?.clubs ?? []).filter((c) => c.isAI);
   const [targetId, setTargetId] = useState(aiClubs[0]?.id ?? "");
-  const [give, setGive] = useState<string>("");
-  const [want, setWant] = useState<string>("");
+  const [give, setGive] = useState<string[]>([]);
+  const [want, setWant] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   if (!league || !human) return null;
+  const maxTrade = league.maxTradeSize ?? 1;
   const target = aiClubs.find((c) => c.id === targetId);
 
+  const ovr = (ids: string[]) =>
+    ids.reduce((s, id) => s + (getPlayer(id)?.overall ?? 0), 0);
+  const giveSum = ovr(give);
+  const wantSum = ovr(want);
+  // Aperçu du verdict (mêmes règles que le store).
+  const verdict =
+    give.length === 0 || want.length === 0
+      ? null
+      : giveSum > wantSum
+        ? { label: "Offre avantageuse — sera acceptee", tone: "text-[#2f7d4f]" }
+        : giveSum === wantSum
+          ? { label: "Offre equilibree — 50% de chances", tone: "text-gold" }
+          : { label: "Tu offres moins — sera refusee", tone: "text-retro" };
+
+  const toggle =
+    (list: string[], setList: (v: string[]) => void) => (id: string) => {
+      if (list.includes(id)) setList(list.filter((x) => x !== id));
+      else if (list.length < maxTrade) setList([...list, id]);
+    };
+
   const submitProposal = () => {
-    if (!give || !want) return;
-    const res = propose(targetId, [give], [want]);
+    if (give.length === 0 || want.length === 0) return;
+    const res = propose(targetId, give, want);
     if (res.accepted) {
       setFeedback("Echange accepte ! Les deux clubs ont signe.");
-      setGive("");
-      setWant("");
+      setGive([]);
+      setWant([]);
     } else {
       setFeedback("Refuse. Le club adverse n'y trouve pas son compte.");
     }
@@ -39,9 +61,14 @@ export function Mercato() {
 
   return (
     <Shell subtitle="Mercato d'hiver — uniquement des echanges">
-      <p className="text-ink/75 mb-6 text-sm max-w-2xl">
-        Pas d&apos;argent, pas de salaire, pas de contrat. Uniquement des
-        echanges de joueurs. <strong>Les deux clubs doivent accepter.</strong>
+      <p className="text-ink/75 mb-2 text-sm max-w-2xl">
+        Pas d&apos;argent, pas de salaire. Uniquement des echanges.{" "}
+        <strong>Tu ne peux pas troquer vers le haut</strong> : la valeur offerte
+        doit etre superieure ou egale (a egalite, 50% de chances).
+      </p>
+      <p className="text-xs uppercase tracking-wide text-retro font-display mb-6">
+        Cette partie : echanges jusqu&apos;a {maxTrade} joueur
+        {maxTrade > 1 ? "s" : ""} par cote.
       </p>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -105,7 +132,7 @@ export function Mercato() {
             value={targetId}
             onChange={(e) => {
               setTargetId(e.target.value);
-              setWant("");
+              setWant([]);
             }}
           >
             {aiClubs.map((c) => (
@@ -117,22 +144,30 @@ export function Mercato() {
 
           <div className="grid grid-cols-2 gap-3">
             <PlayerPicker
-              label="Vous offrez"
+              label={`Tu offres (${give.length}/${maxTrade}) · ${giveSum}`}
               ids={human.squad}
-              value={give}
-              onChange={setGive}
+              selected={give}
+              onToggle={toggle(give, setGive)}
+              atCap={give.length >= maxTrade}
             />
             <PlayerPicker
-              label="Vous demandez"
+              label={`Tu demandes (${want.length}/${maxTrade}) · ${wantSum}`}
               ids={target?.squad ?? []}
-              value={want}
-              onChange={setWant}
+              selected={want}
+              onToggle={toggle(want, setWant)}
+              atCap={want.length >= maxTrade}
             />
           </div>
 
+          {verdict && (
+            <p className={`text-xs mt-3 font-semibold ${verdict.tone}`}>
+              {verdict.label}
+            </p>
+          )}
+
           <button
-            className="retro-btn retro-btn-primary w-full mt-4"
-            disabled={!give || !want}
+            className="retro-btn retro-btn-primary w-full mt-3"
+            disabled={give.length === 0 || want.length === 0}
             onClick={submitProposal}
           >
             Envoyer l&apos;offre
@@ -144,10 +179,7 @@ export function Mercato() {
       </div>
 
       <div className="mt-8 text-center">
-        <button
-          className="retro-btn retro-btn-gold"
-          onClick={() => resume()}
-        >
+        <button className="retro-btn retro-btn-gold" onClick={() => resume()}>
           Reprendre le championnat →
         </button>
       </div>
@@ -173,34 +205,52 @@ function PlayerNames({ ids }: { ids: string[] }) {
 function PlayerPicker({
   label,
   ids,
-  value,
-  onChange,
+  selected,
+  onToggle,
+  atCap,
 }: {
   label: string;
   ids: string[];
-  value: string;
-  onChange: (v: string) => void;
+  selected: string[];
+  onToggle: (id: string) => void;
+  atCap: boolean;
 }) {
   const players = ids
     .map(getPlayer)
     .filter((p): p is Player => Boolean(p))
-    .sort((a, b) => b.overall - a.overall);
+    .sort(byPosition);
   return (
     <div>
       <label className="block text-sm font-semibold mb-1">{label}</label>
-      <select
-        className="w-full border-2 border-ink rounded-sm px-2 py-1.5 bg-paper"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        size={8}
-      >
-        <option value="">—</option>
-        {players.map((p) => (
-          <option key={p.id} value={p.id}>
-            {shortName(p.name)} · {p.position} · {p.overall}
-          </option>
-        ))}
-      </select>
+      <div className="border-2 border-ink rounded-sm bg-paper h-56 overflow-y-auto">
+        {players.map((p) => {
+          const on = selected.includes(p.id);
+          const disabled = !on && atCap;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => onToggle(p.id)}
+              disabled={disabled}
+              className={`w-full flex items-center justify-between gap-2 px-2 py-1 text-xs text-left border-b border-ink/10 ${
+                on
+                  ? "bg-gold/30 font-semibold"
+                  : disabled
+                    ? "opacity-35"
+                    : "hover:bg-paper-dark"
+              }`}
+            >
+              <span className="truncate">
+                {on ? "✓ " : ""}
+                {shortName(p.name)}
+              </span>
+              <span className="text-ink/50 shrink-0">
+                {p.position} · {p.overall}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

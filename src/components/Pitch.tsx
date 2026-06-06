@@ -78,7 +78,8 @@ export function Pitch({
   formation: FormationName;
 }) {
   const slotPositions = FORMATIONS[formation].slots;
-  const coords = FORMATION_LAYOUT[formation];
+  // Repli sur le 4-4-2 si une formation n'a pas (encore) de layout dedie.
+  const coords = FORMATION_LAYOUT[formation] ?? FORMATION_LAYOUT["4-4-2"];
 
   // Pair each provided slot to a formation position (greedy, by position).
   const pool = [...slots];

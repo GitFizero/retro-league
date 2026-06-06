@@ -6,7 +6,6 @@ import { getPlayer, playersOfTeam } from "@/lib/content/teams";
 import { unlockedAchievements, unlockedCollections } from "@/lib/content/collections";
 import {
   PERSONALITIES,
-  evaluateTradeForClub,
   proposeAiTrade,
   refreshAiLineup,
 } from "@/lib/engine/ai";
@@ -231,6 +230,7 @@ export const useGame = create<GameState>()(
           clubPool: input.clubPool,
           withSubs: input.withSubs,
           mercatoEnabled: input.mercatoEnabled,
+          maxTradeSize: 1 + Math.floor(Math.random() * 3), // 1 à 3, selon la partie
           status: "draft",
           currentMatchday: 1,
           clubs,
@@ -484,9 +484,22 @@ export const useGame = create<GameState>()(
         const { league } = get();
         if (!league) return { accepted: false };
         const target = league.clubs.find((c) => c.id === toClubId);
-        if (!target) return { accepted: false };
+        if (!target || offered.length === 0 || requested.length === 0) {
+          return { accepted: false };
+        }
 
-        const accepted = evaluateTradeForClub(target, requested, offered);
+        // Regles d'echange : on ne peut pas troquer "vers le haut". On compare la
+        // somme des notes. Sup -> accepte ; egal -> 50% ; inf -> refuse.
+        const ovr = (ids: string[]) =>
+          ids.reduce((s, id) => s + (getPlayer(id)?.overall ?? 0), 0);
+        const diff = ovr(offered) - ovr(requested);
+        let accepted: boolean;
+        if (diff > 0) accepted = true;
+        else if (diff === 0)
+          accepted = new Rng(
+            `${league.id}-trade-${[...offered, ...requested].sort().join("-")}`
+          ).bool(0.5);
+        else accepted = false;
         if (!accepted) return { accepted: false };
 
         const offer: TradeOffer = {

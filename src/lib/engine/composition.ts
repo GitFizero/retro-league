@@ -17,6 +17,15 @@ import type {
  * 11 titulaires + 5 remplacants. Joueur hors poste => malus via coefficient.
  */
 
+const LINE_RANK: Record<string, number> = { GK: 0, DEF: 1, MID: 2, ATK: 3 };
+/** Sort a club's players keeper → defence → midfield → attack, then by rating. */
+export function byPosition(a: Player, b: Player): number {
+  return (
+    LINE_RANK[SIM_LINE_OF[a.position]] - LINE_RANK[SIM_LINE_OF[b.position]] ||
+    b.overall - a.overall
+  );
+}
+
 /** Effective contribution of a player at an assigned position. */
 export function effectiveRating(
   player: Player,
