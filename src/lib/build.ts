@@ -4,4 +4,4 @@
  * chaque deploiement notable.
  */
 export const BUILD_TAG =
-  "build 2026-06-06e · solo 18 clubs · soutenir + bug report · bilan partageable";
+  "build 2026-06-06f · L1 2008-2023 (15 saisons completes) · solo · soutenir + bug";

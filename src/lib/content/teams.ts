@@ -1,6 +1,10 @@
 import type { Era, HistoricalTeam, Player, Position } from "@/lib/types";
 import { YOUTH_PLAYERS } from "@/lib/content/youth";
 import { FIFA_TEAMS, FIFA_PLAYERS } from "@/lib/content/fifa.generated";
+import {
+  EUROPEAN_TEAMS,
+  EUROPEAN_PLAYERS,
+} from "@/lib/content/european.generated";
 
 /**
  * THE CONTENT BIBLE (PRD Tome 3).
@@ -702,20 +706,25 @@ const RAW_TEAMS: RawTeam[] = [
 
 const EXPANDED = RAW_TEAMS.map(expand);
 
-// Pour les saisons couvertes par le dataset FIFA (tables completes), les squads
-// iconiques faits main feraient doublon -> on ne garde le curate que pour les
-// saisons NON couvertes par FIFA.
-const FIFA_SEASONS = new Set(FIFA_TEAMS.map((t) => t.season));
+// Les datasets fournissent des tables completes : FIFA pour 2014-15+, European
+// Soccer Database (Kaggle) pour 2008-09 a 2013-14. Les squads iconiques faits
+// main ne sont conserves que pour les saisons NON couvertes par un dataset.
+const DATASET_SEASONS = new Set<string>([
+  ...FIFA_TEAMS.map((t) => t.season),
+  ...EUROPEAN_TEAMS.map((t) => t.season),
+]);
 
 export const HISTORICAL_TEAMS: HistoricalTeam[] = [
-  ...EXPANDED.map((e) => e.team).filter((t) => !FIFA_SEASONS.has(t.season)),
+  ...EXPANDED.map((e) => e.team).filter((t) => !DATASET_SEASONS.has(t.season)),
+  ...EUROPEAN_TEAMS,
   ...FIFA_TEAMS,
 ];
 /** Draftable historical players (does NOT include academy youths). */
 export const ALL_PLAYERS: Player[] = [
   ...EXPANDED.flatMap((e) => e.players).filter(
-    (p) => !FIFA_SEASONS.has(p.season)
+    (p) => !DATASET_SEASONS.has(p.season)
   ),
+  ...EUROPEAN_PLAYERS,
   ...FIFA_PLAYERS,
 ];
 
