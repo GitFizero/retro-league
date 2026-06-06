@@ -110,6 +110,8 @@ interface GameState {
     { accepted: boolean };
 
   nextSeason: () => void;
+  /** One-click: start a fresh season with the same squads and sim it to the end. */
+  replaySeason: () => void;
   reset: () => void;
 
   standings: () => StandingRow[];
@@ -539,6 +541,19 @@ export const useGame = create<GameState>()(
           offers: [],
           news: [],
         });
+      },
+
+      replaySeason: () => {
+        const api = get();
+        api.nextSeason(); // same squads, fresh calendar
+        api.startSeason();
+        // Blast through to the final whistle, auto-clearing the mercato pause.
+        for (let guard = 0; guard < 80; guard++) {
+          const st = get().league?.status;
+          if (st === "season") get().simulateRestOfSeason();
+          else if (st === "mercato") get().resumeFromMercato();
+          else break;
+        }
       },
 
       reset: () =>

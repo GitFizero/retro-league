@@ -15,6 +15,7 @@ export function HallOfFame() {
   const seasonNumber = useGame((s) => s.seasonNumber);
   const palmares = useGame((s) => s.palmares);
   const nextSeason = useGame((s) => s.nextSeason);
+  const replaySeason = useGame((s) => s.replaySeason);
   const reset = useGame((s) => s.reset);
 
   if (!league) return null;
@@ -166,6 +167,13 @@ export function HallOfFame() {
           onClick={() => nextSeason()}
         >
           Saison suivante →
+        </button>
+        <button
+          className="retro-btn retro-btn-gold"
+          onClick={() => replaySeason()}
+          title="Rejoue immediatement une saison entiere avec le meme effectif"
+        >
+          ↻ Rejouer (rapide)
         </button>
         <button
           className="retro-btn text-sm"
