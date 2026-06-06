@@ -53,10 +53,11 @@ describe("content bible integrity", () => {
   });
 
   it("keeps two distinct versions of Mbappe-style multi-season players", () => {
-    const marseille = HISTORICAL_TEAMS.filter(
-      (t) => t.clubName === "Marseille"
-    );
+    // Per-season versioning: a city-club spans many seasons as distinct
+    // entries (datasets cover 2008-09 .. 2022-23, IP-safe city names only).
+    const marseille = HISTORICAL_TEAMS.filter((t) => t.clubName === "Marseille");
     expect(marseille.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(marseille.map((t) => t.season)).size).toBe(marseille.length);
   });
 
   it("wires the newly added forgotten legends", () => {
