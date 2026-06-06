@@ -4,4 +4,4 @@
  * chaque deploiement notable.
  */
 export const BUILD_TAG =
-  "build 2026-06-06d · solo 18 clubs · sans banc par defaut · bug report · bilan";
+  "build 2026-06-06e · solo 18 clubs · soutenir + bug report · bilan partageable";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Shell } from "@/components/Shell";
+import { Shell, SupportLink } from "@/components/Shell";
 import { useGame } from "@/lib/store";
 import { useChallenge } from "@/lib/challenge";
 import { ALL_FORMATIONS } from "@/lib/engine/positions";
@@ -81,9 +81,12 @@ export function Home() {
             </button>
           </div>
 
-          <p className="text-xs text-ink/50 italic">
-            &laquo; Oh putain, je m&apos;en souviens. &raquo;
-          </p>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-xs text-ink/50 italic">
+              &laquo; Oh putain, je m&apos;en souviens. &raquo;
+            </p>
+            <SupportLink variant="button" />
+          </div>
         </div>
 
         <form

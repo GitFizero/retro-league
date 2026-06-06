@@ -49,19 +49,53 @@ export function Shell({
       <Masthead subtitle={subtitle} />
       {children}
       <footer className="mt-10 pt-3 border-t border-ink/15 text-center text-[10px] text-ink/40 font-display uppercase tracking-widest">
-        <a
-          href={`mailto:gaetan@batemark.com?subject=${encodeURIComponent(
-            "[Retro League] Rapport de bug"
-          )}&body=${encodeURIComponent(
-            `\n\n----------\nDecris le bug ci-dessus.\nVersion : ${BUILD_TAG}`
-          )}`}
-          className="text-ink/55 hover:text-retro underline decoration-dotted normal-case tracking-normal"
-        >
-          🐞 Signaler un bug
-        </a>
+        <div className="flex items-center justify-center gap-4">
+          <SupportLink />
+          <a
+            href={`mailto:gaetan@batemark.com?subject=${encodeURIComponent(
+              "[Retro League] Rapport de bug"
+            )}&body=${encodeURIComponent(
+              `\n\n----------\nDecris le bug ci-dessus.\nVersion : ${BUILD_TAG}`
+            )}`}
+            className="text-ink/55 hover:text-retro underline decoration-dotted normal-case tracking-normal"
+          >
+            🐞 Signaler un bug
+          </a>
+        </div>
         <div className="mt-1.5">{BUILD_TAG}</div>
       </footer>
     </motion.main>
+  );
+}
+
+/** Buy-me-a-coffee support link, reused across the app. */
+export function SupportLink({
+  variant = "link",
+}: {
+  variant?: "link" | "button";
+}) {
+  const href = "https://buymeacoffee.com/retroleague";
+  if (variant === "button") {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="retro-btn retro-btn-gold text-sm"
+      >
+        ☕ Soutenir
+      </a>
+    );
+  }
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-ink/55 hover:text-retro underline decoration-dotted normal-case tracking-normal"
+    >
+      ☕ Soutenir
+    </a>
   );
 }
 
