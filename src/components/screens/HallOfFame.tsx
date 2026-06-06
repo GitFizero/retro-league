@@ -104,23 +104,32 @@ export function HallOfFame() {
   return (
     <Shell subtitle={`Hall of Fame — Saison ${seasonNumber} terminee`}>
       <div className="text-center mb-8">
-        <span className="stamp text-lg">CHAMPION</span>
-        <h2 className="font-display text-4xl font-black mt-4 text-retro">
-          {champion?.clubName}
+        {humanRank === 1 ? (
+          <span className="stamp text-lg">CHAMPION !</span>
+        ) : humanRank <= 3 ? (
+          <span className="stamp text-lg">PODIUM</span>
+        ) : (
+          <span className="font-display text-sm uppercase tracking-widest text-ink/50">
+            Saison terminee
+          </span>
+        )}
+        <h2 className="font-display text-4xl font-black mt-4">
+          {humanClub?.name ?? "Mon Club"}
         </h2>
-        <p className="text-ink/70 mt-1">
-          {champion?.points} points · {champion?.won} victoires
-        </p>
-        {humanRank > 0 && (
-          <p className="mt-3 text-sm text-ink/70">
-            Votre club termine{" "}
-            <strong>
+        {humanRank > 0 && humanRow && (
+          <p className="text-ink/75 mt-1">
+            <span className="text-retro font-display font-black text-2xl align-middle">
               {humanRank}
               <sup>{humanRank === 1 ? "er" : "e"}</sup>
-            </strong>
-            .
+            </span>{" "}
+            sur {standings.length} · {humanRow.points} pts ·{" "}
+            {humanRow.won}V {humanRow.drawn}N {humanRow.lost}D
           </p>
         )}
+        <p className="text-xs text-ink/55 mt-2">
+          Champion du championnat : <strong>{champion?.clubName}</strong> (
+          {champion?.points} pts)
+        </p>
       </div>
 
       {humanRow && (
@@ -131,7 +140,7 @@ export function HallOfFame() {
                 Votre onze — {humanClub?.name}
               </h3>
               <div className="max-w-[260px] mx-auto">
-                <Pitch slots={humanXI} />
+                {humanClub && <Pitch slots={humanXI} formation={humanClub.formation} />}
               </div>
             </div>
             <div>

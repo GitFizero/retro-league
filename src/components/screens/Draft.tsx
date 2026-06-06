@@ -172,7 +172,7 @@ export function Draft() {
           <h3 className="font-display font-bold uppercase text-sm tracking-wide border-b-2 border-ink/30 pb-2 mb-3">
             Votre onze ({filledSlots.length}/11)
           </h3>
-          <Pitch slots={pitchSlots} />
+          <Pitch slots={pitchSlots} formation={formation} />
           {step.kind !== "xi" && (
             <p className="text-[11px] text-gold font-display font-bold text-center mt-2">
               🪑 Banc en cours…

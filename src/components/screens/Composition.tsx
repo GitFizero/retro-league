@@ -96,7 +96,7 @@ export function Composition() {
       <div className="grid lg:grid-cols-[1fr_300px] gap-6">
         <section>
           <div className="max-w-sm mx-auto">
-            <Pitch slots={pitchSlots} />
+            <Pitch slots={pitchSlots} formation={human.formation} />
           </div>
           <div className="flex justify-center gap-2 mt-3 flex-wrap">
             {LINE_ORDER.map((line) => (

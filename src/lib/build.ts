@@ -4,4 +4,4 @@
  * chaque deploiement notable.
  */
 export const BUILD_TAG =
-  "build 2026-06-06k · top10 par defaut · buteurs sous les resultats · apercu terrain";
+  "build 2026-06-06l · terrain par formation · bilan centre sur Mon Club · credit 82-0";
