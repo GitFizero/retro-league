@@ -10,10 +10,76 @@
 // Atouts vs FIFA : vrais effectifs (titularisations reelles) et VRAI classement
 // final (calcule depuis les resultats). Postes deduits des coordonnees X/Y.
 import { DatabaseSync } from "node:sqlite";
-import { writeFileSync } from "node:fs";
+import { writeFileSync, readFileSync, existsSync } from "node:fs";
 import { toCity } from "./cities.mjs";
 
 const DB = process.argv[2] || "/tmp/soccerdb/database.sqlite";
+// Dictionnaire de postes FIABLE : le CSV FIFA (toutes ligues) donne les vrais
+// postes Sofifa (ST/LW, CDM/CB...). On s'en sert en priorite ; les coordonnees
+// X/Y (bruitees) ne servent que de repli pour les joueurs absents du CSV.
+const FIFA_CSV = process.argv[3] || "/tmp/fifa_legacy.csv";
+
+// FIFA -> codes internes (identique a generate-fifa.mjs).
+const FIFA_POS = {
+  GK: "G", CB: "DC", RB: "DD", LB: "DG", RWB: "DD", LWB: "DG",
+  CDM: "MDC", CM: "MC", CAM: "MOC", RM: "MD", LM: "MG",
+  RW: "AD", LW: "AG", ST: "BU", CF: "BU",
+};
+
+function parseCsvLine(line) {
+  const out = [];
+  let cur = "", q = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (q) {
+      if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else cur += c;
+    } else if (c === '"') q = true;
+    else if (c === ",") { out.push(cur); cur = ""; }
+    else cur += c;
+  }
+  out.push(cur);
+  return out;
+}
+
+/** Map<short_name, { primary, secondary[] }> depuis le CSV FIFA (toutes ligues). */
+function loadFifaPositions(csvPath) {
+  const dict = new Map();
+  if (!existsSync(csvPath)) {
+    console.warn(`[!] CSV FIFA absent (${csvPath}) — postes deduits des coords seuls.`);
+    return dict;
+  }
+  const lines = readFileSync(csvPath, "utf8").split("\n");
+  let idx = null;
+  const primFreq = new Map(); // name -> Map<pos,count> (poste principal)
+  const allFreq = new Map(); // name -> Map<pos,count> (tous postes)
+  for (const line of lines) {
+    if (!line) continue;
+    const f = parseCsvLine(line);
+    if (!idx) { idx = {}; f.forEach((n, i) => (idx[n.trim()] = i)); continue; }
+    const name = (f[idx.short_name] || "").trim();
+    const raw = (f[idx.player_positions] || "").split(",").map((s) => s.trim()).filter(Boolean);
+    const mapped = raw.map((p) => FIFA_POS[p]).filter(Boolean);
+    if (!name || mapped.length === 0) continue;
+    if (!primFreq.has(name)) { primFreq.set(name, new Map()); allFreq.set(name, new Map()); }
+    const pf = primFreq.get(name), af = allFreq.get(name);
+    pf.set(mapped[0], (pf.get(mapped[0]) || 0) + 1);
+    for (const p of mapped) af.set(p, (af.get(p) || 0) + 1);
+  }
+  for (const [name, pf] of primFreq) {
+    const primary = [...pf.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    const secondary = [...allFreq.get(name).entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([p]) => p)
+      .filter((p) => p !== primary)
+      .slice(0, 2);
+    dict.set(name, { primary, secondary });
+  }
+  console.log(`postes FIFA charges: ${dict.size} noms`);
+  return dict;
+}
+
+const FIFA_POSITIONS = loadFifaPositions(FIFA_CSV);
 const OUT = "src/lib/content/european.generated.ts";
 const FR = 4769; // France Ligue 1
 const SEASONS = [
@@ -40,12 +106,6 @@ const slug = (s) =>
   s.normalize("NFD").replace(/[̀-ͯ]/g, "")
     .toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "");
 
-const median = (arr) => {
-  const s = [...arr].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-};
-
 // Poste a partir des coordonnees moyennes (Y: 1 gardien -> 11 attaque ; X: 1
 // gauche -> 9 droite).
 function posFromXY(y, x) {
@@ -58,6 +118,24 @@ function posFromXY(y, x) {
     return y <= 6 ? "MDC" : "MOC";
   }
   return side === "L" ? "AG" : side === "R" ? "AD" : "BU";
+}
+
+// Poste principal + postes secondaires deduits de la repartition des matchs.
+// Un poste devient secondaire s'il represente au moins 25% des matchs (et >= 2),
+// ce qui capture les vrais polyvalents (un DG qui a aussi joue MG, etc.).
+function derivePositions(posList) {
+  if (posList.length === 0) return { primary: "MC", secondary: [] };
+  const counts = new Map();
+  for (const p of posList) counts.set(p, (counts.get(p) || 0) + 1);
+  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  const primary = sorted[0][0];
+  const threshold = Math.max(2, Math.ceil(posList.length * 0.25));
+  const secondary = sorted
+    .slice(1)
+    .filter(([, c]) => c >= threshold)
+    .map(([p]) => p)
+    .slice(0, 2);
+  return { primary, secondary };
 }
 
 function shorten(full) {
@@ -123,8 +201,8 @@ for (const season of SEASONS) {
     if (!rawName) continue;
     const club = canon(rawName.trim());
 
-    // Titularisations + coordonnees par joueur.
-    const agg = new Map(); // pid -> {n, ys:[], xs:[]}
+    // Titularisations + poste occupe a CHAQUE match (bucket X/Y).
+    const agg = new Map(); // pid -> {n, pos:[]}
     for (const side of ["home", "away"]) {
       for (const m of matches) {
         if (m[`${side}_team_api_id`] !== teamApiId) continue;
@@ -133,17 +211,16 @@ for (const season of SEASONS) {
           if (!pid) continue;
           const y = m[`${side}_player_Y${i}`];
           const x = m[`${side}_player_X${i}`];
-          if (!agg.has(pid)) agg.set(pid, { n: 0, ys: [], xs: [] });
+          if (!agg.has(pid)) agg.set(pid, { n: 0, pos: [] });
           const e = agg.get(pid);
           e.n++;
-          if (y != null) e.ys.push(y);
-          if (x != null) e.xs.push(x);
+          if (y != null && x != null) e.pos.push(posFromXY(y, x));
         }
       }
     }
 
     const squad = [...agg.entries()]
-      .map(([pid, e]) => ({ pid, n: e.n, y: median(e.ys), x: median(e.xs) }))
+      .map(([pid, e]) => ({ pid, n: e.n, pos: e.pos }))
       .sort((a, b) => b.n - a.n)
       .slice(0, MAX_PER_CLUB);
     if (squad.length < 11) continue;
@@ -157,10 +234,15 @@ for (const season of SEASONS) {
         (ovrStmt.get(s.pid, seasonEnd) || ovrFallback.get(s.pid) || {}).o ?? 68;
       const birthYear = pl.b ? parseInt(String(pl.b).slice(0, 4), 10) : null;
       const age = birthYear ? startYear + 1 - birthYear : 26;
+      const name = shorten(pl.n);
+      // Postes : CSV FIFA (fiable) en priorite, sinon repli sur les coordonnees.
+      const fifa = FIFA_POSITIONS.get(name);
+      const { primary, secondary } = fifa ?? derivePositions(s.pos);
       built.push({
         pid: s.pid,
-        name: shorten(pl.n),
-        position: posFromXY(s.y || 6, s.x || 5),
+        name,
+        position: primary,
+        secondaryPositions: secondary,
         overall: ovr,
         age,
       });
@@ -174,7 +256,7 @@ for (const season of SEASONS) {
         id: `${teamId}_${i}_${slug(p.name)}`.slice(0, 60),
         name: p.name,
         position: p.position,
-        secondaryPositions: [],
+        secondaryPositions: p.secondaryPositions,
         overall: p.overall,
         potential: Math.min(99, p.overall + Math.max(0, 24 - p.age)),
         age: p.age,
