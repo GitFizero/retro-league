@@ -65,6 +65,7 @@ export function Shell({
             82-0.com
           </a>
         </div>
+        <div className="mt-1 text-[9px] text-ink/30">{BUILD_TAG}</div>
       </footer>
     </motion.main>
   );
