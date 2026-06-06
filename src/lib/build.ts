@@ -3,4 +3,5 @@
  * coup d'oeil qu'on est bien sur la derniere version deployee. A bumper a
  * chaque deploiement notable.
  */
-export const BUILD_TAG = "build 2026-06-06 · formation+banc+top10+replay";
+export const BUILD_TAG =
+  "build 2026-06-06 · L1 2015-23 (180 clubs) · formation+banc+top10+replay";
