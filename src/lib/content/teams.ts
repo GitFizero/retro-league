@@ -1,5 +1,6 @@
 import type { Era, HistoricalTeam, Player, Position } from "@/lib/types";
 import { YOUTH_PLAYERS } from "@/lib/content/youth";
+import { FIFA_TEAMS, FIFA_PLAYERS } from "@/lib/content/fifa.generated";
 
 /**
  * THE CONTENT BIBLE (PRD Tome 3).
@@ -701,9 +702,15 @@ const RAW_TEAMS: RawTeam[] = [
 
 const EXPANDED = RAW_TEAMS.map(expand);
 
-export const HISTORICAL_TEAMS: HistoricalTeam[] = EXPANDED.map((e) => e.team);
+export const HISTORICAL_TEAMS: HistoricalTeam[] = [
+  ...EXPANDED.map((e) => e.team),
+  ...FIFA_TEAMS,
+];
 /** Draftable historical players (does NOT include academy youths). */
-export const ALL_PLAYERS: Player[] = EXPANDED.flatMap((e) => e.players);
+export const ALL_PLAYERS: Player[] = [
+  ...EXPANDED.flatMap((e) => e.players),
+  ...FIFA_PLAYERS,
+];
 
 // Youths are resolvable via getPlayer (for replacements) but never drafted.
 export const PLAYERS_BY_ID = new Map<string, Player>(

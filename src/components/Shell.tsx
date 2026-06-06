@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useGame } from "@/lib/store";
+import { BUILD_TAG } from "@/lib/build";
 
 export function Masthead({ subtitle }: { subtitle?: string }) {
   return (
@@ -41,6 +42,9 @@ export function Shell({
     >
       <Masthead subtitle={subtitle} />
       {children}
+      <footer className="mt-10 pt-3 border-t border-ink/15 text-center text-[10px] text-ink/40 font-display uppercase tracking-widest">
+        {BUILD_TAG}
+      </footer>
     </motion.main>
   );
 }
