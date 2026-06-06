@@ -5,6 +5,18 @@ export const metadata: Metadata = {
   title: "Retro League — La machine a remonter le temps du football",
   description:
     "Jeu de fantasy football historique. Draft, nostalgie, championnat et moments legendaires. Reconstruisez les equipes de votre adolescence.",
+  openGraph: {
+    title: "Retro League",
+    description:
+      "Draft historique, championnat simule et moments legendaires. Reconstruis les equipes de ton adolescence.",
+    images: ["/banner.png"],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Retro League",
+    images: ["/banner.png"],
+  },
 };
 
 export const viewport: Viewport = {

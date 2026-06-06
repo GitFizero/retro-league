@@ -34,6 +34,13 @@ export function Home() {
 
   return (
     <Shell>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/banner.png"
+        alt="Retro League"
+        className="w-full max-w-2xl mx-auto rounded-sm border-2 border-ink/30 shadow-card mb-8"
+      />
+
       <section className="flex flex-col gap-8 max-w-2xl mx-auto">
         <div className="space-y-4 order-2">
           <h2 className="font-display text-2xl font-bold">

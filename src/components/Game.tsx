@@ -24,9 +24,12 @@ export function Game() {
   if (!mounted) {
     return (
       <div className="min-h-screen grid place-items-center">
-        <div className="font-display text-2xl text-retro animate-pulse">
-          RETRO LEAGUE
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo.png"
+          alt="Retro League"
+          className="h-28 w-auto animate-pulse"
+        />
       </div>
     );
   }
