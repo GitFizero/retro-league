@@ -4,4 +4,4 @@
  * chaque deploiement notable.
  */
 export const BUILD_TAG =
-  "build 2026-06-06i · draft & compo sur terrain · cartes joueurs · resultats colores";
+  "build 2026-06-06j · terrain draft/compo · cartes · bilan fin de saison (realise/projete)";
