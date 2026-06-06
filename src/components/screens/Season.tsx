@@ -1,11 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Shell, NewLeagueButton } from "@/components/Shell";
 import { MatchModal } from "@/components/MatchModal";
 import { useGame, HUMAN_CLUB_ID } from "@/lib/store";
 import { computeStandings, totalMatchdays } from "@/lib/engine/fixtures";
 import type { Fixture } from "@/lib/types";
+
+const SPEEDS = { Lent: 600, Normal: 260, Rapide: 80 } as const;
+type SpeedName = keyof typeof SPEEDS;
 
 export function Season() {
   const league = useGame((s) => s.league);
@@ -18,18 +21,31 @@ export function Season() {
   const playMatchday = useGame((s) => s.playMatchday);
   const simulateRest = useGame((s) => s.simulateRestOfSeason);
   const seasonNumber = useGame((s) => s.seasonNumber);
-  const [tab, setTab] = useState<"results" | "standings" | "news">("results");
   const news = useGame((s) => s.news);
+  const [tab, setTab] = useState<"standings" | "results" | "news">("standings");
   const [openFixture, setOpenFixture] = useState<Fixture | null>(null);
   const [liveOpen, setLiveOpen] = useState(false);
   const [viewMd, setViewMd] = useState<number | null>(null);
+  // Auto-play : enchaine les journees tout seul (defaut en mode rapide), le
+  // classement se reajuste en direct. Pause/reprise a la volee.
+  const [auto, setAuto] = useState(league?.simulationMode === "rapide");
+  const [speed, setSpeed] = useState<SpeedName>("Normal");
+
+  const total = league ? totalMatchdays(league.clubs.length) : 0;
+  const seasonOver = league ? league.currentMatchday > total : false;
+
+  // The auto-play loop: one matchday per tick while running.
+  useEffect(() => {
+    if (!auto || !league || league.status !== "season") return;
+    if (league.currentMatchday > total) return;
+    const id = setTimeout(() => useGame.getState().playMatchday(), SPEEDS[speed]);
+    return () => clearTimeout(id);
+  }, [auto, league, total, speed]);
 
   const playAndWatch = () => {
     const playedMd = league?.currentMatchday ?? 1;
     playMatchday();
     setViewMd(null);
-    // Open the human's just-played match as a live, minute-by-minute reveal —
-    // only if we're still on the season screen (not paused for mercato/finished).
     const fresh = useGame.getState().league;
     if (!fresh || fresh.status !== "season") return;
     const mine = fresh.fixtures.find(
@@ -45,9 +61,9 @@ export function Season() {
   };
 
   if (!league) return null;
-  const total = totalMatchdays(league.clubs.length);
   const md = Math.min(league.currentMatchday, total);
   const shownMd = viewMd ?? md;
+  const lastPlayedMd = Math.min(league.currentMatchday - 1, total);
 
   const clubName = (id: string) =>
     league.clubs.find((c) => c.id === id)?.name ?? id;
@@ -63,16 +79,37 @@ export function Season() {
             : 0
       );
 
-  const seasonOver = league.currentMatchday > total;
-
   return (
     <Shell subtitle={`${league.name} — Saison ${seasonNumber}`}>
-      <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
         <div className="font-display text-lg">
           Journee <span className="text-retro font-bold">{md}</span> / {total}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {!seasonOver && (
+            <button
+              className={`retro-btn text-sm ${auto ? "retro-btn-gold" : "retro-btn-primary"}`}
+              onClick={() => setAuto((a) => !a)}
+            >
+              {auto ? "⏸ Pause" : "▶ Lancer la saison"}
+            </button>
+          )}
+          {!seasonOver && auto && (
+            <div className="flex gap-1">
+              {(Object.keys(SPEEDS) as SpeedName[]).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSpeed(s)}
+                  className={`px-2 py-1 text-xs font-display border-2 border-ink rounded-sm ${
+                    speed === s ? "bg-ink text-paper" : "bg-paper"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+          {!seasonOver && !auto && (
             <button
               className="retro-btn retro-btn-primary text-sm"
               onClick={playAndWatch}
@@ -80,27 +117,63 @@ export function Season() {
               Jouer la journee
             </button>
           )}
-          {!seasonOver && league.simulationMode === "rapide" && (
+          {!seasonOver && (
             <button
-              className="retro-btn retro-btn-gold text-sm"
+              className="retro-btn text-sm"
               onClick={() => {
+                setAuto(false);
                 simulateRest();
                 setViewMd(null);
               }}
             >
-              Simuler la saison
+              Tout simuler
             </button>
           )}
           <NewLeagueButton />
         </div>
       </div>
 
+      {/* Bandeau resultats de la derniere journee jouee (live). */}
+      {lastPlayedMd >= 1 && (
+        <div className="retro-card p-2 mb-4">
+          <div className="text-[10px] uppercase tracking-wide text-ink/50 mb-1 px-1">
+            Resultats — Journee {lastPlayedMd}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {fixturesOf(lastPlayedMd).map((f) => {
+              const isHuman =
+                f.homeClubId === HUMAN_CLUB_ID ||
+                f.awayClubId === HUMAN_CLUB_ID;
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => {
+                    setLiveOpen(false);
+                    setOpenFixture(f);
+                  }}
+                  className={`shrink-0 px-2 py-1 rounded-sm border text-xs whitespace-nowrap hover:-translate-y-0.5 transition-transform ${
+                    isHuman ? "border-gold bg-gold/15 font-semibold" : "border-ink/20"
+                  }`}
+                  title={`${clubName(f.homeClubId)} vs ${clubName(f.awayClubId)}`}
+                >
+                  {clubName(f.homeClubId).slice(0, 12)}{" "}
+                  <span className="font-display font-bold">
+                    {f.homeScore}-{f.awayScore}
+                  </span>{" "}
+                  {clubName(f.awayClubId).slice(0, 12)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-2 mb-4">
-        <Tab active={tab === "results"} onClick={() => setTab("results")}>
-          Calendrier
-        </Tab>
         <Tab active={tab === "standings"} onClick={() => setTab("standings")}>
           Classement
+        </Tab>
+        <Tab active={tab === "results"} onClick={() => setTab("results")}>
+          Calendrier
         </Tab>
         <Tab active={tab === "news"} onClick={() => setTab("news")}>
           Faits Divers{news.length > 0 ? ` (${news.length})` : ""}
