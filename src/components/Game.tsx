@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useGame } from "@/lib/store";
 import { useChallenge } from "@/lib/challenge";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Home } from "@/components/screens/Home";
 import { Draft } from "@/components/screens/Draft";
 import { Composition } from "@/components/screens/Composition";
@@ -29,22 +30,24 @@ export function Game() {
   }
 
   // Mode Defi prend la priorite tant qu'il est actif.
-  if (challengePhase !== "idle") return <Challenge />;
+  const screen = (() => {
+    if (challengePhase !== "idle") return <Challenge />;
+    if (!league) return <Home />;
+    switch (league.status) {
+      case "draft":
+        return <Draft />;
+      case "composition":
+        return <Composition />;
+      case "season":
+        return <Season />;
+      case "mercato":
+        return <Mercato />;
+      case "finished":
+        return <HallOfFame />;
+      default:
+        return <Home />;
+    }
+  })();
 
-  if (!league) return <Home />;
-
-  switch (league.status) {
-    case "draft":
-      return <Draft />;
-    case "composition":
-      return <Composition />;
-    case "season":
-      return <Season />;
-    case "mercato":
-      return <Mercato />;
-    case "finished":
-      return <HallOfFame />;
-    default:
-      return <Home />;
-  }
+  return <ErrorBoundary>{screen}</ErrorBoundary>;
 }
