@@ -366,6 +366,14 @@ export const useGame = create<GameState>()(
         const bench = human.lineup.find((e) => e.playerId === benchId);
         if (!starter || !bench) return;
 
+        // Poste strict : le remplacant ne peut prendre la place que s'il joue
+        // ce poste (principal ou secondaire). Sinon, echange refuse.
+        const benchPlayer = getPlayer(benchId);
+        const benchPositions = benchPlayer
+          ? [benchPlayer.position, ...benchPlayer.secondaryPositions]
+          : [];
+        if (!benchPositions.includes(starter.assignedPosition)) return;
+
         const lineup = human.lineup.map((e) => {
           if (e.playerId === starterId) {
             return {
