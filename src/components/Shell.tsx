@@ -62,6 +62,17 @@ export function Shell({
             🐞 Signaler un bug
           </a>
         </div>
+        <div className="mt-1.5 normal-case tracking-normal text-ink/45">
+          Inspire par et avec nos remerciements a{" "}
+          <a
+            href="https://www.82-0.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-retro underline decoration-dotted"
+          >
+            82-0.com
+          </a>
+        </div>
         <div className="mt-1.5">{BUILD_TAG}</div>
       </footer>
     </motion.main>

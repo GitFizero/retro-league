@@ -188,6 +188,7 @@ export function Home() {
             </select>
             <div className="max-w-[190px] mx-auto mt-3">
               <Pitch
+                formation={formation}
                 slots={FORMATIONS[formation].slots.map((pos, i) => ({
                   key: `${pos}_${i}`,
                   position: pos,
