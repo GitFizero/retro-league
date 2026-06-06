@@ -207,6 +207,7 @@ export async function loadLeague(
     historicalDepth: lg.historical_depth as HistoricalDepth,
     clubPool: "all",
     withSubs: true,
+    mercatoEnabled: true,
     status: lg.status,
     currentMatchday: lg.current_matchday,
     clubs,

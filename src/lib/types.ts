@@ -159,6 +159,8 @@ export interface League {
   clubPool: ClubPool;
   /** Human drafts 11 + 5 subs when true, else the XI only. */
   withSubs: boolean;
+  /** Mid-season mercato pause (trades + departures) when true. */
+  mercatoEnabled: boolean;
   status: LeagueStatus;
   currentMatchday: number;
   clubs: Club[];

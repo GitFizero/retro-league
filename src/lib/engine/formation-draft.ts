@@ -1,6 +1,10 @@
 import { playersOfTeam } from "@/lib/content/teams";
 import { hasLegend } from "@/lib/content/legendary";
-import { FORMATIONS, positionCoefficient } from "@/lib/engine/positions";
+import {
+  FORMATIONS,
+  positionCoefficient,
+  SIM_LINE_OF,
+} from "@/lib/engine/positions";
 import { drawTeam } from "@/lib/engine/draft";
 import type { Rng } from "@/lib/engine/rng";
 import type {
@@ -53,14 +57,24 @@ export function remainingSlots(
   return slots;
 }
 
-/** Best still-open slot the player can fill (coef >= ELIGIBLE), else null. */
+/**
+ * Best still-open slot the player can fill, else null.
+ *
+ * Hard rule (facon 38-0) : un joueur ne peut remplir qu'un poste de SA LIGNE
+ * (gardien / defense / milieu / attaque). On garde la souplesse laterale a
+ * l'interieur d'une ligne (un DC peut couvrir DD/DG) mais un attaquant ne
+ * descend jamais au milieu : le nombre de joueurs par ligne colle donc
+ * exactement a la formation choisie.
+ */
 export function slotForPlayer(
   player: Player,
   remaining: Position[]
 ): Position | null {
+  const playerLines = new Set(positionsOf(player).map((p) => SIM_LINE_OF[p]));
   let best: Position | null = null;
   let bestCoef = ELIGIBLE - 1e-6;
   for (const slot of remaining) {
+    if (!playerLines.has(SIM_LINE_OF[slot])) continue; // ligne differente -> non
     const c = slotCoefficient(player, slot);
     if (c > bestCoef) {
       bestCoef = c;
