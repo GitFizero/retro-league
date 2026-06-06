@@ -4,4 +4,4 @@
  * chaque deploiement notable.
  */
 export const BUILD_TAG =
-  "build 2026-06-06l · terrain par formation · bilan centre sur Mon Club · credit 82-0";
+  "build 2026-06-06m · options par defaut a gauche · notes par ligne au bilan";

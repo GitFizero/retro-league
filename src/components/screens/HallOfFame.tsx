@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { shortName } from "@/lib/format";
 import { Shell, SupportLink } from "@/components/Shell";
 import { computeStandings } from "@/lib/engine/fixtures";
-import { teamRating } from "@/lib/engine/composition";
+import { teamRating, lineStrengths } from "@/lib/engine/composition";
 import { getPlayer } from "@/lib/content/teams";
 import { Pitch, type PitchSlot } from "@/components/Pitch";
 import {
@@ -159,6 +159,27 @@ export function HallOfFame() {
                   </span>
                 )}
               </div>
+              {humanClub && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {([
+                    ["ATT", lineStrengths(humanClub.lineup).ATK, "#C4122F"],
+                    ["MIL", lineStrengths(humanClub.lineup).MID, "#7a6a2f"],
+                    ["DEF", lineStrengths(humanClub.lineup).DEF, "#2b5d8a"],
+                    ["GAR", lineStrengths(humanClub.lineup).GK, "#2f7d4f"],
+                  ] as const).map(([label, val, color]) => (
+                    <span
+                      key={label}
+                      className="inline-flex items-center gap-1.5 border-2 rounded-sm px-2 py-1 font-display text-sm"
+                      style={{ borderColor: color }}
+                    >
+                      <span className="text-[10px] tracking-wide text-ink/55">
+                        {label}
+                      </span>
+                      <strong style={{ color }}>{Math.round(val)}</strong>
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-4">
                 <Stat label="V" value={humanRow.won} tone="text-[#2f7d4f]" />
                 <Stat label="N" value={humanRow.drawn} tone="text-gold" />

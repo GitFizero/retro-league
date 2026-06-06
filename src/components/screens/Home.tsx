@@ -13,11 +13,11 @@ import type {
 } from "@/lib/types";
 
 const DEPTHS: { value: HistoricalDepth; label: string }[] = [
-  { value: "MODERNE", label: "Epoque actuelle" },
-  { value: "DEPUIS_2015", label: "Depuis 2015" },
-  { value: "DEPUIS_2010", label: "Depuis 2010" },
-  { value: "DEPUIS_2007", label: "Depuis 2007" },
   { value: "TOUTE_HISTOIRE", label: "Toute l'histoire (depuis 2002)" },
+  { value: "DEPUIS_2007", label: "Depuis 2007" },
+  { value: "DEPUIS_2010", label: "Depuis 2010" },
+  { value: "DEPUIS_2015", label: "Depuis 2015" },
+  { value: "MODERNE", label: "Epoque actuelle" },
 ];
 
 export function Home() {
@@ -200,16 +200,16 @@ export function Home() {
           <Field label="Clubs proposes a la roue">
             <div className="flex gap-2">
               <ModeBtn
-                active={clubPool === "all"}
-                onClick={() => setClubPool("all")}
-                title="Tous les clubs"
-                desc="Tout le championnat"
-              />
-              <ModeBtn
                 active={clubPool === "top10"}
                 onClick={() => setClubPool("top10")}
                 title="Top 10"
                 desc="1er au 10e de chaque saison"
+              />
+              <ModeBtn
+                active={clubPool === "all"}
+                onClick={() => setClubPool("all")}
+                title="Tous les clubs"
+                desc="Tout le championnat"
               />
             </div>
           </Field>
@@ -217,16 +217,16 @@ export function Home() {
           <Field label="Effectif">
             <div className="flex gap-2">
               <ModeBtn
-                active={withSubs}
-                onClick={() => setWithSubs(true)}
-                title="Avec banc"
-                desc="11 + 5 remplacants"
-              />
-              <ModeBtn
                 active={!withSubs}
                 onClick={() => setWithSubs(false)}
                 title="XI seul"
                 desc="11 titulaires"
+              />
+              <ModeBtn
+                active={withSubs}
+                onClick={() => setWithSubs(true)}
+                title="Avec banc"
+                desc="11 + 5 remplacants"
               />
             </div>
           </Field>
