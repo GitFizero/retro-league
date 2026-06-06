@@ -1,5 +1,6 @@
 "use client";
 
+import { shortName } from "@/lib/format";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { findRivalry } from "@/lib/content/legendary";
@@ -180,7 +181,7 @@ function EventRow({
         <div className="min-w-0">
           <div className="text-sm leading-snug">{event.description}</div>
           {cardPlayer && (
-            <div className="text-[11px] text-ink/55">{cardPlayer.name}</div>
+            <div className="text-[11px] text-ink/55">{shortName(cardPlayer.name)}</div>
           )}
         </div>
       </div>
@@ -215,7 +216,7 @@ function EventRow({
         <div className="text-sm leading-snug">{event.description}</div>
         {scorer && (
           <div className="text-[11px] text-ink/55">
-            {scorer.name} · {team.name}
+            {shortName(scorer.name)} · {team.name}
           </div>
         )}
       </div>

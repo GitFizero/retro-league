@@ -1,4 +1,5 @@
 import { getPlayer } from "@/lib/content/teams";
+import { shortName } from "@/lib/format";
 import { pickYouth } from "@/lib/content/youth";
 import {
   OFF_PITCH_EVENTS,
@@ -80,8 +81,8 @@ function applyTemplate(
       if (victim) {
         const r = replaceWithYouth(club, victim, rng);
         next = r.club;
-        playerName = victim.name;
-        youthName = r.youth.name;
+        playerName = shortName(victim.name);
+        youthName = shortName(r.youth.name);
       }
       break;
     }
@@ -89,7 +90,7 @@ function applyTemplate(
       const victim = pickVictim(club, rng);
       if (victim) {
         next = { ...club, wantaway: victim.id };
-        playerName = victim.name;
+        playerName = shortName(victim.name);
       }
       break;
     }
@@ -140,7 +141,7 @@ export function resolveWantaway(
       clubId: club.id,
       clubName: club.name,
       kind: "fenerbahce",
-      text: `Faute d'accord, ${victim.name} signe a Fenerbahce. Le jeune ${r.youth.name} (general ${r.youth.overall}) le remplace au pied leve.`,
+      text: `Faute d'accord, ${shortName(victim.name)} signe a Fenerbahce. Le jeune ${shortName(r.youth.name)} (general ${r.youth.overall}) le remplace au pied leve.`,
       title: "Direction la Turquie",
     },
   };

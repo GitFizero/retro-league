@@ -1,5 +1,6 @@
 "use client";
 
+import { shortName } from "@/lib/format";
 import { useState } from "react";
 import { Shell } from "@/components/Shell";
 import { useGame, HUMAN_CLUB_ID } from "@/lib/store";
@@ -161,7 +162,7 @@ function PlayerNames({ ids }: { ids: string[] }) {
         const p = getPlayer(id);
         return (
           <div key={id} className="truncate">
-            {p ? `${p.name} (${p.overall})` : id}
+            {p ? `${shortName(p.name)} (${p.overall})` : id}
           </div>
         );
       })}
@@ -196,7 +197,7 @@ function PlayerPicker({
         <option value="">—</option>
         {players.map((p) => (
           <option key={p.id} value={p.id}>
-            {p.name} · {p.position} · {p.overall}
+            {shortName(p.name)} · {p.position} · {p.overall}
           </option>
         ))}
       </select>

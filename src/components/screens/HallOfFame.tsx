@@ -1,5 +1,6 @@
 "use client";
 
+import { shortName } from "@/lib/format";
 import { Shell } from "@/components/Shell";
 import {
   useGame,
@@ -73,7 +74,7 @@ export function HallOfFame() {
                 className="flex items-center justify-between text-sm"
               >
                 <span>
-                  {i + 1}. {s.player!.name}{" "}
+                  {i + 1}. {shortName(s.player!.name)}{" "}
                   <span className="text-ink/50 text-xs">
                     {s.player!.club} {s.player!.season}
                   </span>

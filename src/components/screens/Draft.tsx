@@ -1,5 +1,6 @@
 "use client";
 
+import { shortName } from "@/lib/format";
 import { motion } from "framer-motion";
 import { Shell, NewLeagueButton } from "@/components/Shell";
 import { PlayerCard } from "@/components/PlayerCard";
@@ -126,7 +127,7 @@ export function Draft() {
                     key={p.id}
                     className="flex items-center justify-between gap-2"
                   >
-                    <span className="truncate">{p.name}</span>
+                    <span className="truncate">{shortName(p.name)}</span>
                     <span className="text-ink/50 text-xs shrink-0">
                       {p.position} · {p.overall}
                     </span>
