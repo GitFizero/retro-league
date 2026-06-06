@@ -56,9 +56,9 @@ export function Home() {
             revivez vos <strong>Moments Legendaires</strong>.
           </p>
           <ul className="text-sm text-ink/70 space-y-1">
-            <li>★ Draft historique — le hasard cree les souvenirs</li>
-            <li>★ Championnat simule, narration vivante</li>
-            <li>★ Clubs IA, mercato d&apos;echanges, Hall of Fame</li>
+            <li>★ Draft historique : compose ton onze parmi 300+ club-saisons</li>
+            <li>★ Championnat complet simule, classement en direct</li>
+            <li>★ Mercato d&apos;echanges, bilan et Hall of Fame</li>
           </ul>
 
           <div className="retro-card p-4 bg-ink text-paper border-gold">

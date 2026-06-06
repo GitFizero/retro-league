@@ -135,7 +135,21 @@ export function encodeReport(r: SeasonReport): string {
 export function decodeReport(s: string): SeasonReport | null {
   try {
     const r = JSON.parse(b64decode(s));
-    return r && r.v === 1 ? (r as SeasonReport) : null;
+    // Valider la FORME, pas seulement la version : un lien forge ne doit jamais
+    // faire planter le rendu du bilan (champs manquants -> .map sur undefined).
+    if (
+      !r ||
+      r.v !== 1 ||
+      typeof r.leagueName !== "string" ||
+      typeof r.champion !== "string" ||
+      typeof r.humanClubName !== "string" ||
+      !Array.isArray(r.standings) ||
+      !Array.isArray(r.topScorers) ||
+      !Array.isArray(r.keyMoments)
+    ) {
+      return null;
+    }
+    return r as SeasonReport;
   } catch {
     return null;
   }

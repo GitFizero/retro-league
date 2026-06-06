@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { useGame } from "@/lib/store";
 import { BUILD_TAG } from "@/lib/build";
 
@@ -51,16 +52,7 @@ export function Shell({
       <footer className="mt-10 pt-3 border-t border-ink/15 text-center text-[10px] text-ink/40 font-display uppercase tracking-widest">
         <div className="flex items-center justify-center gap-4">
           <SupportLink />
-          <a
-            href={`mailto:gaetan@batemark.com?subject=${encodeURIComponent(
-              "[Retro League] Rapport de bug"
-            )}&body=${encodeURIComponent(
-              `\n\n----------\nDecris le bug ci-dessus.\nVersion : ${BUILD_TAG}`
-            )}`}
-            className="text-ink/55 hover:text-retro underline decoration-dotted normal-case tracking-normal"
-          >
-            🐞 Signaler un bug
-          </a>
+          <BugReportButton />
         </div>
         <div className="mt-1.5 normal-case tracking-normal text-ink/45">
           Inspire par et avec nos remerciements a{" "}
@@ -75,6 +67,92 @@ export function Shell({
         </div>
       </footer>
     </motion.main>
+  );
+}
+
+/**
+ * Bug-report form. Opens a small modal; on submit it composes a prefilled email
+ * via mailto. The destination address is never rendered on the page (assembled
+ * from a base64 token at click time) so it stays private.
+ */
+function BugReportButton() {
+  const [open, setOpen] = useState(false);
+  const [desc, setDesc] = useState("");
+  const [contact, setContact] = useState("");
+
+  const send = () => {
+    if (!desc.trim()) return;
+    const to = atob("Z2FldGFuQGJhdGVtYXJrLmNvbQ==");
+    const body =
+      `${desc}\n\n----------\n` +
+      (contact ? `Contact : ${contact}\n` : "") +
+      `Version : ${BUILD_TAG}`;
+    const href = `mailto:${to}?subject=${encodeURIComponent(
+      "[Retro League] Rapport de bug"
+    )}&body=${encodeURIComponent(body)}`;
+    window.location.href = href;
+    setOpen(false);
+    setDesc("");
+    setContact("");
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-ink/55 hover:text-retro underline decoration-dotted normal-case tracking-normal"
+      >
+        🐞 Signaler un bug
+      </button>
+      {open && (
+        <div
+          className="fixed inset-0 z-50 bg-ink/60 grid place-items-center p-4"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="retro-card p-5 w-full max-w-md normal-case tracking-normal text-left"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-display text-lg font-bold mb-1">
+              Signaler un bug
+            </h3>
+            <p className="text-xs text-ink/60 mb-3">
+              Decris le souci le plus precisement possible. Merci !
+            </p>
+            <textarea
+              autoFocus
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              rows={5}
+              placeholder="Que s'est-il passe ? Sur quel ecran ?"
+              className="w-full border-2 border-ink rounded-sm bg-paper p-2 text-sm mb-3"
+            />
+            <input
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+              placeholder="Ton email (optionnel, pour te repondre)"
+              className="w-full border-2 border-ink rounded-sm bg-paper p-2 text-sm mb-4"
+            />
+            <div className="flex gap-2">
+              <button
+                className="retro-btn retro-btn-primary text-sm flex-1"
+                disabled={!desc.trim()}
+                onClick={send}
+              >
+                Envoyer
+              </button>
+              <button
+                className="retro-btn text-sm"
+                onClick={() => setOpen(false)}
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

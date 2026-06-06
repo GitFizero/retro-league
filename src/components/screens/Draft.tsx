@@ -13,6 +13,7 @@ import {
   remainingSummary,
 } from "@/lib/engine/formation-draft";
 import { getPlayer } from "@/lib/content/teams";
+import { byPosition } from "@/lib/engine/composition";
 
 export function Draft() {
   const draw = useGame((s) => s.humanDraw);
@@ -53,7 +54,7 @@ export function Draft() {
   const pitchSlots = [...filledSlots, ...emptySlots];
 
   return (
-    <Shell subtitle="Draft historique — le hasard cree les souvenirs">
+    <Shell subtitle="Draft historique">
       <div className="flex items-center justify-between mb-4">
         <div className="font-display text-lg">
           Recrue{" "}
@@ -129,7 +130,7 @@ export function Draft() {
             Choisissez UN joueur
           </p>
           <div className="grid sm:grid-cols-2 gap-3">
-            {draw.players.map((p) => {
+            {[...draw.players].sort(byPosition).map((p) => {
               const pickable = draftPickable(p, human, withSubs, owned);
               return (
                 <div
@@ -163,7 +164,7 @@ export function Draft() {
             </button>
           ) : (
             <p className="mt-5 text-xs text-ink/50 italic">
-              Mode normal : pas de reroll. Le hasard fait la loi.
+              Mode normal : pas de reroll.
             </p>
           )}
         </motion.section>

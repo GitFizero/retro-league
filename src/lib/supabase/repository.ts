@@ -208,6 +208,7 @@ export async function loadLeague(
     clubPool: "all",
     withSubs: true,
     mercatoEnabled: true,
+    maxTradeSize: 2,
     status: lg.status,
     currentMatchday: lg.current_matchday,
     clubs,

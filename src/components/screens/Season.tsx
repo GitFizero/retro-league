@@ -211,8 +211,7 @@ export function Season() {
         <div className="space-y-2">
           {news.length === 0 ? (
             <p className="text-sm text-ink/55 italic">
-              Rien a signaler… pour l&apos;instant. Le foot francais reserve
-              toujours des surprises.
+              Rien a signaler pour l&apos;instant.
             </p>
           ) : (
             news.map((n) => (
