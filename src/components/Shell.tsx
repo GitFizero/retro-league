@@ -73,7 +73,6 @@ export function Shell({
             82-0.com
           </a>
         </div>
-        <div className="mt-1.5">{BUILD_TAG}</div>
       </footer>
     </motion.main>
   );
