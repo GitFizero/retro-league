@@ -49,7 +49,17 @@ export function Shell({
       <Masthead subtitle={subtitle} />
       {children}
       <footer className="mt-10 pt-3 border-t border-ink/15 text-center text-[10px] text-ink/40 font-display uppercase tracking-widest">
-        {BUILD_TAG}
+        <a
+          href={`mailto:gaetan@batemark.com?subject=${encodeURIComponent(
+            "[Retro League] Rapport de bug"
+          )}&body=${encodeURIComponent(
+            `\n\n----------\nDecris le bug ci-dessus.\nVersion : ${BUILD_TAG}`
+          )}`}
+          className="text-ink/55 hover:text-retro underline decoration-dotted normal-case tracking-normal"
+        >
+          🐞 Signaler un bug
+        </a>
+        <div className="mt-1.5">{BUILD_TAG}</div>
       </footer>
     </motion.main>
   );

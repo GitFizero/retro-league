@@ -24,13 +24,15 @@ export function Home() {
   const startChallenge = useChallenge((s) => s.start);
   const [name, setName] = useState("Ligue des Souvenirs");
   const [clubName, setClubName] = useState("Mon Club");
-  const [clubCount, setClubCount] = useState(8);
   const [mode, setMode] = useState<SimulationMode>("rapide");
   const [depth, setDepth] = useState<HistoricalDepth>("TOUTE_HISTOIRE");
   const [difficulty, setDifficulty] = useState<"normal" | "easy">("normal");
   const [formation, setFormation] = useState<FormationName>("4-4-2");
-  const [withSubs, setWithSubs] = useState(true);
+  const [withSubs, setWithSubs] = useState(false);
   const [clubPool, setClubPool] = useState<"all" | "top10">("all");
+
+  // Jeu solo : un championnat complet, tous les adversaires geres par l'IA.
+  const CLUB_COUNT = 18;
 
   return (
     <Shell>
@@ -49,8 +51,7 @@ export function Home() {
           <p className="text-ink/80 leading-relaxed">
             Construisez une equipe impossible avec les joueurs de votre
             adolescence. Tirez vos recrues au sort, affrontez des clubs rivaux et
-            revivez les <strong>Moments Legendaires</strong> : le coup franc de
-            Juninho, Payet qui torture Lyon, l&apos;acceleration de Mbappe.
+            revivez vos <strong>Moments Legendaires</strong>.
           </p>
           <ul className="text-sm text-ink/70 space-y-1">
             <li>★ Draft historique — le hasard cree les souvenirs</li>
@@ -92,7 +93,7 @@ export function Home() {
             createLeague({
               name,
               clubName,
-              clubCount,
+              clubCount: CLUB_COUNT,
               simulationMode: mode,
               historicalDepth: depth,
               difficulty,
@@ -105,6 +106,20 @@ export function Home() {
           <h3 className="font-display text-xl font-bold border-b-2 border-ink/30 pb-2">
             Creer une ligue
           </h3>
+
+          <div className="flex items-center gap-2 text-xs bg-paper-dark border-2 border-ink/20 rounded-sm px-3 py-2">
+            <span className="text-base">👥</span>
+            <span className="text-ink/70">
+              <strong className="font-display uppercase tracking-wide">
+                Solo
+              </strong>{" "}
+              — 17 clubs adverses geres par l&apos;IA. Le{" "}
+              <strong>multijoueur</strong> arrive
+              <span className="ml-1 uppercase tracking-widest text-[10px] text-retro border border-retro rounded px-1 py-0.5">
+                bientot
+              </span>
+            </span>
+          </div>
 
           <Field label="Nom de la ligue">
             <input
@@ -120,20 +135,6 @@ export function Home() {
               value={clubName}
               onChange={(e) => setClubName(e.target.value)}
             />
-          </Field>
-
-          <Field label={`Nombre de clubs : ${clubCount}`}>
-            <input
-              type="range"
-              min={2}
-              max={18}
-              value={clubCount}
-              onChange={(e) => setClubCount(Number(e.target.value))}
-              className="w-full accent-retro"
-            />
-            <div className="text-xs text-ink/60">
-              Vous + {clubCount - 1} clubs IA
-            </div>
           </Field>
 
           <Field label="Profondeur historique">
