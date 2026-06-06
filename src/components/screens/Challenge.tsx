@@ -6,16 +6,20 @@ import { motion } from "framer-motion";
 import { Shell } from "@/components/Shell";
 import { PlayerCard } from "@/components/PlayerCard";
 import { Pitch, type PitchSlot } from "@/components/Pitch";
+import { ShareCard } from "@/components/ShareCard";
+import { shareNodeAsImage } from "@/lib/shareImage";
 import { MatchModal } from "@/components/MatchModal";
 import { useChallenge, CHALLENGE_XI } from "@/lib/challenge";
 import { HISTORICAL_TEAMS, getPlayer } from "@/lib/content/teams";
-import { autoLineup, byPosition } from "@/lib/engine/composition";
+import { autoLineup, byPosition, lineStrengths } from "@/lib/engine/composition";
 import { FORMATIONS } from "@/lib/engine/positions";
-import type { Club } from "@/lib/types";
+import type { Club, FormationName } from "@/lib/types";
 
-/** Build pitch slots (filled + empty) from a free-draft XI in a 4-4-2 preview. */
-function challengePitchSlots(xi: string[]): PitchSlot[] {
-  const form = "4-4-2" as const;
+/** Build pitch slots (filled + empty) from a free-draft XI for a formation. */
+function challengePitchSlots(
+  xi: string[],
+  form: FormationName = "4-4-2"
+): PitchSlot[] {
   const starters = autoLineup(xi, form).filter((e) => e.starter);
   const filled: PitchSlot[] = starters.map((e) => ({
     key: e.playerId,
@@ -194,12 +198,23 @@ function ChallengeDraft() {
 function ChallengeResult() {
   const result = useChallenge((s) => s.result);
   const teamName = useChallenge((s) => s.teamName);
+  const xi = useChallenge((s) => s.xi);
   const start = useChallenge((s) => s.start);
   const reset = useChallenge((s) => s.reset);
   const [copied, setCopied] = useState(false);
   const [replay, setReplay] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [imgMsg, setImgMsg] = useState<string | null>(null);
 
   if (!result) return null;
+
+  const shareImg = async () => {
+    if (!cardRef.current) return;
+    setImgMsg("Generation de l'image…");
+    const m = await shareNodeAsImage(cardRef.current, "retro-league-defi.png");
+    setImgMsg(m);
+    setTimeout(() => setImgMsg(null), 6000);
+  };
 
   // Minimal Club stubs for the match viewer (it only needs id + name).
   const replayClubs = result.highlight
@@ -307,20 +322,64 @@ function ChallengeResult() {
         )}
 
         <div className="mt-3 flex flex-wrap gap-2 justify-center">
-          <button className="retro-btn retro-btn-gold" onClick={share}>
-            {copied ? "Copie !" : "Partager mon defi"}
+          <button className="retro-btn retro-btn-gold" onClick={shareImg}>
+            📸 Partager en image
           </button>
-          <button
-            className="retro-btn"
-            onClick={() => start(teamName)}
-          >
+          <button className="retro-btn text-sm" onClick={share}>
+            {copied ? "Copie !" : "🔗 Texte"}
+          </button>
+          <button className="retro-btn" onClick={() => start(teamName)}>
             Rejouer
           </button>
           <button className="retro-btn" onClick={reset}>
             Accueil
           </button>
         </div>
+        {imgMsg && (
+          <p className="mt-3 text-center text-sm text-gold font-semibold break-all">
+            {imgMsg}
+          </p>
+        )}
       </motion.div>
+
+      {/* Carte partagée (hors écran) pour la capture PNG. */}
+      <div
+        aria-hidden
+        style={{ position: "fixed", left: -10000, top: 0, pointerEvents: "none" }}
+      >
+        <ShareCard
+          ref={cardRef}
+          clubName={teamName}
+          badge={verdict}
+          overall={result.rating}
+          lineRatings={(() => {
+            const lr = lineStrengths(autoLineup(xi, result.formation));
+            return {
+              ATK: Math.round(lr.ATK),
+              MID: Math.round(lr.MID),
+              DEF: Math.round(lr.DEF),
+              GK: Math.round(lr.GK),
+            };
+          })()}
+          slots={challengePitchSlots(xi, result.formation)}
+          formation={result.formation}
+          stats={[
+            { label: "Points", value: result.points },
+            {
+              label: "V-N-D",
+              value: `${result.won}-${result.drawn}-${result.lost}`,
+            },
+            { label: "Buts", value: `${result.goalsFor}:${result.goalsAgainst}` },
+            { label: "Classement", value: `${result.rank}/${result.totalClubs}` },
+          ]}
+          notes={[
+            result.topScorer
+              ? `Meilleur buteur : ${shortName(result.topScorer.name)} (${result.topScorer.goals})`
+              : "",
+            result.bestWin ? `Plus large victoire : ${result.bestWin}` : "",
+          ].filter(Boolean)}
+        />
+      </div>
 
       {replay && result.highlight && (
         <MatchModal

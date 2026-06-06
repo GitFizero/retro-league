@@ -4,4 +4,4 @@
  * chaque deploiement notable.
  */
 export const BUILD_TAG =
-  "build 2026-06-06n · postes stricts + choix du poste · faits divers dans le direct";
+  "build 2026-06-06o · partage en image (compo + stats) · bilan enrichi";
