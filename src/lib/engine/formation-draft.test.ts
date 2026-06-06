@@ -1,44 +1,56 @@
 import { describe, expect, it } from "vitest";
-import { slotForPlayer, remainingSlots } from "@/lib/engine/formation-draft";
+import {
+  slotForPlayer,
+  fittingSlots,
+  remainingSlots,
+} from "@/lib/engine/formation-draft";
 import type { Player, Position } from "@/lib/types";
 
-// Minimal player fixture — only the position fields matter for slotForPlayer.
+// Minimal player fixture — only the position fields matter.
 function p(position: Position, ...secondary: Position[]): Player {
   return { position, secondaryPositions: secondary } as Player;
 }
 
-describe("draft slot eligibility — formation lines (facon 38-0)", () => {
-  it("a striker never drops into a midfield slot (no cross-line)", () => {
-    expect(slotForPlayer(p("BU"), ["MC"])).toBeNull();
-    expect(slotForPlayer(p("BU"), ["MOC"])).toBeNull();
-  });
-
-  it("a striker fills an attacking slot", () => {
-    expect(slotForPlayer(p("BU"), ["BU"])).toBe("BU");
-    // a winger covers the striker slot (same ATK line)
-    expect(slotForPlayer(p("AD"), ["BU"])).toBe("BU");
-  });
-
-  it("a centre-back covers full-back slots but not midfield", () => {
-    expect(slotForPlayer(p("DC"), ["DD"])).toBe("DD");
-    expect(slotForPlayer(p("DC"), ["DG"])).toBe("DG");
+describe("draft slot eligibility — postes stricts", () => {
+  it("un joueur ne tient QUE ses postes naturels", () => {
+    // un DC ne peut pas jouer DD/DG ni au milieu
+    expect(slotForPlayer(p("DC"), ["DD"])).toBeNull();
+    expect(slotForPlayer(p("DC"), ["DG"])).toBeNull();
     expect(slotForPlayer(p("DC"), ["MDC"])).toBeNull();
+    expect(slotForPlayer(p("DC"), ["DC"])).toBe("DC");
   });
 
-  it("a goalkeeper only fills the keeper slot (can't draft 5 GKs)", () => {
+  it("un buteur ne tient pas un poste d'ailier (sauf s'il l'a)", () => {
+    expect(slotForPlayer(p("BU"), ["AD"])).toBeNull();
+    expect(slotForPlayer(p("BU"), ["MC"])).toBeNull();
+    expect(slotForPlayer(p("BU"), ["BU"])).toBe("BU");
+    expect(slotForPlayer(p("AD"), ["BU"])).toBeNull();
+  });
+
+  it("un gardien ne tient que le poste de gardien", () => {
     expect(slotForPlayer(p("G"), ["DC", "MC", "BU"])).toBeNull();
     expect(slotForPlayer(p("G"), ["G"])).toBe("G");
   });
 
-  it("honours multi-position players across their lines (ST/CAM, LB/CB)", () => {
-    // ST primary (ATK) + CAM secondary (MID) -> eligible for a midfield slot
+  it("multi-postes : eligible a chacun de ses postes listes", () => {
+    // DC qui remonte aussi DD : peut couvrir DD
+    expect(slotForPlayer(p("DC", "DD"), ["DD"])).toBe("DD");
+    // ST/LW : peut prendre un poste d'ailier gauche
+    expect(slotForPlayer(p("BU", "AG"), ["AG"])).toBe("AG");
+    // ST/CAM : eligible au poste de meneur
     expect(slotForPlayer(p("BU", "MOC"), ["MOC"])).toBe("MOC");
-    // LB primary + CB secondary (both DEF) -> covers a centre-back slot
-    expect(slotForPlayer(p("DG", "DC"), ["DC"])).toBe("DC");
   });
 
-  it("a 4-4-2 cannot accept a third striker once both ATK slots are taken", () => {
-    const remaining = remainingSlots(["BU", "BU"], "4-4-2"); // both strikers placed
+  it("fittingSlots liste tous les postes ouverts du joueur", () => {
+    expect(fittingSlots(p("DC", "DD"), ["DC", "DD", "DG", "MC"])).toEqual([
+      "DC",
+      "DD",
+    ]);
+    expect(fittingSlots(p("MC"), ["DC", "DD"])).toEqual([]);
+  });
+
+  it("un 4-4-2 refuse un 3e buteur une fois les 2 postes BU pris", () => {
+    const remaining = remainingSlots(["BU", "BU"], "4-4-2");
     expect(slotForPlayer(p("BU"), remaining)).toBeNull();
   });
 });

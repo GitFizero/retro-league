@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { shortName } from "@/lib/format";
 import { motion } from "framer-motion";
 import { Shell, NewLeagueButton } from "@/components/Shell";
 import { PlayerCard } from "@/components/PlayerCard";
@@ -9,11 +11,15 @@ import {
   BENCH_SIZE,
   draftPickable,
   draftTarget,
+  fittingSlots,
+  formationNeeds,
   nextDraftStep,
   remainingSummary,
 } from "@/lib/engine/formation-draft";
 import { getPlayer } from "@/lib/content/teams";
 import { byPosition } from "@/lib/engine/composition";
+import { POSITION_LABEL } from "@/lib/engine/positions";
+import type { Player, Position } from "@/lib/types";
 
 export function Draft() {
   const draw = useGame((s) => s.humanDraw);
@@ -22,6 +28,7 @@ export function Draft() {
   const human = useGame((s) => s.humanClub());
   const withSubs = useGame((s) => s.league?.withSubs ?? true);
   const rerollsLeft = useGame((s) => s.rerollsLeft);
+  const [chooser, setChooser] = useState<Player | null>(null);
 
   if (!draw || !human) {
     return (
@@ -146,7 +153,16 @@ export function Draft() {
                 >
                   <PlayerCard
                     player={p}
-                    onClick={pickable ? () => pick(p.id) : undefined}
+                    onClick={
+                      pickable
+                        ? () => {
+                            if (step.kind !== "xi") return pick(p.id);
+                            const fits = fittingSlots(p, step.remaining);
+                            if (fits.length <= 1) pick(p.id);
+                            else setChooser(p); // multi-postes -> on demande
+                          }
+                        : undefined
+                    }
                   />
                 </div>
               );
@@ -181,6 +197,80 @@ export function Draft() {
           )}
         </aside>
       </div>
+
+      {chooser && step.kind === "xi" && (
+        <PositionChooser
+          player={chooser}
+          formationPositions={[...new Set(formationNeeds(formation))]}
+          openPositions={new Set(step.remaining)}
+          onPick={(pos) => {
+            pick(chooser.id, pos);
+            setChooser(null);
+          }}
+          onClose={() => setChooser(null)}
+        />
+      )}
     </Shell>
+  );
+}
+
+/** Choose which natural position a multi-position recruit fills. */
+function PositionChooser({
+  player,
+  formationPositions,
+  openPositions,
+  onPick,
+  onClose,
+}: {
+  player: Player;
+  formationPositions: Position[];
+  openPositions: Set<Position>;
+  onPick: (pos: Position) => void;
+  onClose: () => void;
+}) {
+  const own = [...new Set([player.position, ...player.secondaryPositions])];
+  // Only the player's own positions that the formation actually uses.
+  const options = own.filter((p) => formationPositions.includes(p));
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-ink/60 grid place-items-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="retro-card p-5 w-full max-w-xs"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="font-display text-lg font-bold mb-1">
+          {shortName(player.name)}
+        </h3>
+        <p className="text-xs text-ink/60 mb-3">A quel poste l&apos;aligner ?</p>
+        <div className="space-y-2">
+          {options.map((pos) => {
+            const open = openPositions.has(pos);
+            return (
+              <button
+                key={pos}
+                disabled={!open}
+                onClick={() => onPick(pos)}
+                className={`w-full flex items-center justify-between gap-2 border-2 rounded-sm px-3 py-2 text-sm ${
+                  open
+                    ? "border-ink hover:bg-paper-dark"
+                    : "border-ink/20 opacity-40 cursor-not-allowed"
+                }`}
+              >
+                <span className="font-display font-bold">{pos}</span>
+                <span className="text-xs text-ink/60">
+                  {POSITION_LABEL[pos]}
+                  {!open ? " · pris" : ""}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <button className="retro-btn text-xs mt-4 w-full" onClick={onClose}>
+          Annuler
+        </button>
+      </div>
+    </div>
   );
 }

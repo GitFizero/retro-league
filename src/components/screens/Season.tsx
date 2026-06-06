@@ -8,7 +8,7 @@ import { useGame, HUMAN_CLUB_ID } from "@/lib/store";
 import { computeStandings, totalMatchdays } from "@/lib/engine/fixtures";
 import { getPlayer } from "@/lib/content/teams";
 import { shortName } from "@/lib/format";
-import type { Fixture } from "@/lib/types";
+import type { Fixture, NewsItem } from "@/lib/types";
 
 // Cadence par journee jouee (ms). Le live se savoure ; "Tout simuler" pour zapper.
 const SPEEDS = { Lent: 4500, Normal: 3000, Rapide: 1200 } as const;
@@ -73,14 +73,21 @@ export function Season() {
             : 0
       );
 
-  // Live feed: the human's played matches, newest first (they rise into view).
-  const humanFeed = league.fixtures
-    .filter(
-      (f) =>
-        f.status === "played" &&
-        (f.homeClubId === HUMAN_CLUB_ID || f.awayClubId === HUMAN_CLUB_ID)
-    )
-    .sort((a, b) => b.matchday - a.matchday);
+  // Live feed: the human's played matches + the (rare) faits divers, interleaved
+  // by matchday, newest first — each rises into view.
+  type FeedItem =
+    | { kind: "match"; key: string; md: number; f: Fixture }
+    | { kind: "news"; key: string; md: number; n: NewsItem };
+  const feed: FeedItem[] = [
+    ...league.fixtures
+      .filter(
+        (f) =>
+          f.status === "played" &&
+          (f.homeClubId === HUMAN_CLUB_ID || f.awayClubId === HUMAN_CLUB_ID)
+      )
+      .map((f) => ({ kind: "match" as const, key: f.id, md: f.matchday, f })),
+    ...news.map((n) => ({ kind: "news" as const, key: n.id, md: n.matchday, n })),
+  ].sort((a, b) => b.md - a.md);
 
   const resultTone = (f: Fixture) => {
     const homeHuman = f.homeClubId === HUMAN_CLUB_ID;
@@ -154,13 +161,37 @@ export function Season() {
         <div className="min-w-0">
           {tab === "direct" && (
             <div className="space-y-3">
-              {humanFeed.length === 0 && (
+              {feed.length === 0 && (
                 <p className="text-sm text-ink/55 italic">
                   Lance la saison pour voir tes resultats s&apos;afficher ici.
                 </p>
               )}
-              {humanFeed.map((f) => {
-                const t = resultTone(f);
+              {feed.map((item) =>
+                item.kind === "news" ? (
+                  <motion.div
+                    key={item.key}
+                    layout
+                    initial={{ opacity: 0, y: 34, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.45, ease: "easeOut" }}
+                    className="border-l-4 border-gold bg-gold/10 rounded-sm px-4 py-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-display font-bold text-sm">
+                        📰 {item.n.title}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-wide text-ink/45">
+                        J{item.n.matchday} · {item.n.clubName}
+                      </span>
+                    </div>
+                    <p className="text-xs text-ink/75 italic mt-0.5">
+                      {item.n.text}
+                    </p>
+                  </motion.div>
+                ) : (
+                  (() => {
+                    const f = item.f;
+                    const t = resultTone(f);
                 const homeScorers = scorers(f, f.homeClubId);
                 const awayScorers = scorers(f, f.awayClubId);
                 return (
@@ -214,7 +245,9 @@ export function Season() {
                     </div>
                   </motion.button>
                 );
-              })}
+                  })()
+                )
+              )}
             </div>
           )}
 
