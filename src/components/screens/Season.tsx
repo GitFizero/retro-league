@@ -1,15 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Shell, NewLeagueButton } from "@/components/Shell";
 import { MatchModal } from "@/components/MatchModal";
 import { useGame, HUMAN_CLUB_ID } from "@/lib/store";
-import { totalMatchdays } from "@/lib/engine/fixtures";
+import { computeStandings, totalMatchdays } from "@/lib/engine/fixtures";
 import type { Fixture } from "@/lib/types";
 
 export function Season() {
   const league = useGame((s) => s.league);
-  const standings = useGame((s) => s.standings());
+  // Derive standings locally (memoised on the league) — selecting s.standings()
+  // returns a fresh array every render, which makes useSyncExternalStore loop.
+  const standings = useMemo(
+    () => (league ? computeStandings(league.clubs, league.fixtures) : []),
+    [league]
+  );
   const playMatchday = useGame((s) => s.playMatchday);
   const simulateRest = useGame((s) => s.simulateRestOfSeason);
   const seasonNumber = useGame((s) => s.seasonNumber);

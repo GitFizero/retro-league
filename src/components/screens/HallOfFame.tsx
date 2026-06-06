@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { shortName } from "@/lib/format";
 import { Shell } from "@/components/Shell";
+import { computeStandings } from "@/lib/engine/fixtures";
 import {
   useGame,
   HUMAN_CLUB_ID,
@@ -13,7 +14,12 @@ import { buildSeasonReport, reportLink } from "@/lib/report";
 
 export function HallOfFame() {
   const league = useGame((s) => s.league);
-  const standings = useGame((s) => s.standings());
+  // Memoised locally — s.standings() returns a new array each render and would
+  // make useSyncExternalStore loop (React #185).
+  const standings = useMemo(
+    () => (league ? computeStandings(league.clubs, league.fixtures) : []),
+    [league]
+  );
   const seasonNumber = useGame((s) => s.seasonNumber);
   const palmares = useGame((s) => s.palmares);
   const nextSeason = useGame((s) => s.nextSeason);
