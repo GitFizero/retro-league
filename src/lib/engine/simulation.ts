@@ -1,4 +1,5 @@
 import { getPlayer } from "@/lib/content/teams";
+import { shortName } from "@/lib/format";
 import { findRivalry, momentsForPlayer } from "@/lib/content/legendary";
 import {
   NARRATIVE_EVENTS,
@@ -319,8 +320,8 @@ function buildGoals(
         playerId: scorer.id,
         assistId: assist?.id,
         description: narrateGoal({
-          scorer: scorer.name,
-          assist: assist?.name,
+          scorer: shortName(scorer.name),
+          assist: assist ? shortName(assist.name) : undefined,
           club: club.name,
           minute,
           rng,
@@ -447,7 +448,7 @@ function rollMatchIncidents(
         clubId: club.id,
         playerId: p.id,
         description: renderText(rng.pick(YELLOW_CARD_LINES), {
-          player: p.name,
+          player: shortName(p.name),
           club: club.name,
         }),
       });
@@ -464,7 +465,7 @@ function rollMatchIncidents(
         clubId: club.id,
         playerId: p.id,
         description: renderText(rng.pick(RED_CARD_LINES), {
-          player: p.name,
+          player: shortName(p.name),
           club: club.name,
         }),
       });

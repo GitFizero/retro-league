@@ -1,5 +1,6 @@
 "use client";
 
+import { shortName } from "@/lib/format";
 import { useState } from "react";
 import { Shell, NewLeagueButton } from "@/components/Shell";
 import { useGame } from "@/lib/store";
@@ -116,7 +117,7 @@ export function Composition() {
                         <div className="font-display font-bold text-base leading-none">
                           {p.overall}
                         </div>
-                        <div className="text-[11px] truncate">{p.name}</div>
+                        <div className="text-[11px] truncate">{shortName(p.name)}</div>
                         <div
                           className={`text-[10px] ${
                             coef < 1 ? "text-retro font-semibold" : "text-ink/50"
@@ -155,7 +156,7 @@ export function Composition() {
                       disabled={!selectedStarter}
                       className="w-full flex items-center justify-between gap-2 text-sm px-2 py-1 rounded-sm border border-ink/20 hover:bg-paper-dark disabled:opacity-50"
                     >
-                      <span className="truncate">{p.name}</span>
+                      <span className="truncate">{shortName(p.name)}</span>
                       <span className="text-ink/50 text-xs shrink-0">
                         {p.position} · {p.overall}
                       </span>

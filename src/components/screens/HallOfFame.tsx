@@ -1,5 +1,6 @@
 "use client";
 
+import { shortName } from "@/lib/format";
 import { Shell } from "@/components/Shell";
 import {
   useGame,
@@ -14,6 +15,7 @@ export function HallOfFame() {
   const seasonNumber = useGame((s) => s.seasonNumber);
   const palmares = useGame((s) => s.palmares);
   const nextSeason = useGame((s) => s.nextSeason);
+  const replaySeason = useGame((s) => s.replaySeason);
   const reset = useGame((s) => s.reset);
 
   if (!league) return null;
@@ -73,7 +75,7 @@ export function HallOfFame() {
                 className="flex items-center justify-between text-sm"
               >
                 <span>
-                  {i + 1}. {s.player!.name}{" "}
+                  {i + 1}. {shortName(s.player!.name)}{" "}
                   <span className="text-ink/50 text-xs">
                     {s.player!.club} {s.player!.season}
                   </span>
@@ -165,6 +167,13 @@ export function HallOfFame() {
           onClick={() => nextSeason()}
         >
           Saison suivante →
+        </button>
+        <button
+          className="retro-btn retro-btn-gold"
+          onClick={() => replaySeason()}
+          title="Rejoue immediatement une saison entiere avec le meme effectif"
+        >
+          ↻ Rejouer (rapide)
         </button>
         <button
           className="retro-btn text-sm"

@@ -183,7 +183,20 @@ export const useChallenge = create<ChallengeState>()(
       reset: () =>
         set({ phase: "idle", xi: [], draw: null, result: null }),
     }),
-    { name: "retro-league-challenge" }
+    {
+      name: "retro-league-challenge",
+      // Reset older Mode Defi saves (rerolls/difficulty added).
+      version: 2,
+      migrate: () => ({
+        phase: "idle" as const,
+        teamName: "Mon XI Retro",
+        xi: [],
+        draw: null,
+        seed: 0,
+        rerollsLeft: 0,
+        result: null,
+      }),
+    }
   )
 );
 

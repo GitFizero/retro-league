@@ -2,6 +2,7 @@
 
 import { POSITION_LABEL, SIM_LINE_OF } from "@/lib/engine/positions";
 import { hasLegend } from "@/lib/content/legendary";
+import { shortName } from "@/lib/format";
 import type { Line, Player, Position } from "@/lib/types";
 
 function ratingTone(overall: number): string {
@@ -83,7 +84,7 @@ export function PlayerCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="font-display font-bold leading-tight truncate">
-            {player.name}
+            {shortName(player.name)}
           </div>
           <div className="text-xs text-ink/70 truncate">
             {assignedPosition && assignedPosition !== player.position ? (

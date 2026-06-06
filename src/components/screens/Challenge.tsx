@@ -1,5 +1,6 @@
 "use client";
 
+import { shortName } from "@/lib/format";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Shell } from "@/components/Shell";
@@ -168,7 +169,7 @@ function ChallengeDraft() {
                     .filter((p): p is NonNullable<typeof p> => Boolean(p))
                     .map((p) => (
                       <li key={p.id} className="flex justify-between gap-2">
-                        <span className="truncate">{p.name}</span>
+                        <span className="truncate">{shortName(p.name)}</span>
                         <span className="text-ink/50 text-xs shrink-0">
                           {p.position} · {p.overall}
                         </span>
@@ -267,7 +268,7 @@ function ChallengeResult() {
           {result.topScorer && (
             <p className="text-sm">
               ⚽ Meilleur buteur :{" "}
-              <strong>{result.topScorer.name}</strong> ({result.topScorer.goals}{" "}
+              <strong>{shortName(result.topScorer.name)}</strong> ({result.topScorer.goals}{" "}
               buts)
             </p>
           )}
@@ -373,7 +374,7 @@ function buildShareText(r: ReturnType<typeof useChallenge.getState>["result"]): 
     `RETRO LEAGUE — Mode Defi`,
     `${r.teamName} (${r.formation}, note ${r.rating})`,
     `${verdict} — ${r.points} pts, ${r.won}V ${r.drawn}N ${r.lost}D`,
-    r.topScorer ? `Meilleur buteur : ${r.topScorer.name} (${r.topScorer.goals})` : "",
+    r.topScorer ? `Meilleur buteur : ${shortName(r.topScorer.name)} (${r.topScorer.goals})` : "",
     r.legendaryHighlights[0] ? `« ${r.legendaryHighlights[0]} »` : "",
     `Score : ${r.score} — bats-moi sur Retro League.`,
   ];
