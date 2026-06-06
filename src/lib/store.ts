@@ -774,7 +774,9 @@ function applyTrade(clubs: Club[], offer: TradeOffer): Club[] {
       return c;
     })
     .map((c) =>
-      c.isAI ? refreshAiLineup(c) : c
+      // Recompose le XI des deux cotes apres l'echange (l'humain aussi, pour ne
+      // pas garder une entree de lineup pointant vers un joueur cede).
+      c.isAI ? refreshAiLineup(c) : { ...c, lineup: autoLineup(c.squad, c.formation) }
     );
 }
 

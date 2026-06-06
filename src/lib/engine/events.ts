@@ -22,9 +22,14 @@ function pickVictim(club: Club, rng: Rng): Player | undefined {
   return rng.pick(pool);
 }
 
-function replaceWithYouth(club: Club, victim: Player, rng: Rng): { club: Club; youth: Player } {
+function replaceWithYouth(
+  club: Club,
+  victim: Player,
+  rng: Rng
+): { club: Club; youth: Player } | null {
   const owned = new Set(club.squad);
   const youth = pickYouth(rng, victim.position, owned);
+  if (!youth) return null; // academie epuisee -> on ne remplace pas (squad intact)
   const squad = [...club.squad.filter((id) => id !== victim.id), youth.id];
   return {
     club: { ...club, squad, lineup: autoLineup(squad, club.formation) },
@@ -78,8 +83,8 @@ function applyTemplate(
       break;
     case "replace": {
       const victim = pickVictim(club, rng);
-      if (victim) {
-        const r = replaceWithYouth(club, victim, rng);
+      const r = victim ? replaceWithYouth(club, victim, rng) : null;
+      if (victim && r) {
         next = r.club;
         playerName = shortName(victim.name);
         youthName = shortName(r.youth.name);
@@ -133,6 +138,8 @@ export function resolveWantaway(
     return { club: { ...club, wantaway: undefined }, news: noNews() };
   }
   const r = replaceWithYouth(club, victim, rng);
+  // Academie epuisee : le joueur reste, on lui retire juste l'envie de partir.
+  if (!r) return { club: { ...club, wantaway: undefined }, news: noNews() };
   return {
     club: { ...r.club, wantaway: undefined },
     news: {

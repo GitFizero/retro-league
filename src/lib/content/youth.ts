@@ -49,12 +49,18 @@ export const YOUTH_PLAYERS: Player[] = SPREAD.map((pos, i) => {
   };
 });
 
-/** Pick a youth for a given position (or any), avoiding ids already owned. */
+/**
+ * Pick an UNOWNED youth for a given position (or any). Returns null if the whole
+ * academy is already owned — the caller must then skip the replacement rather
+ * than re-use an owned id (which would create a duplicate squad entry and a
+ * short XI). The 16-youth pool is only exhausted after very many replacement
+ * events on a single club across multiple seasons.
+ */
 export function pickYouth(
   rng: Rng,
   position: Position,
   owned: Set<string>
-): Player {
+): Player | null {
   const samePos = YOUTH_PLAYERS.filter(
     (y) => y.position === position && !owned.has(y.id)
   );
@@ -62,6 +68,6 @@ export function pickYouth(
     samePos.length > 0
       ? samePos
       : YOUTH_PLAYERS.filter((y) => !owned.has(y.id));
-  if (pool.length === 0) return rng.pick(YOUTH_PLAYERS);
+  if (pool.length === 0) return null;
   return rng.pick(pool);
 }
