@@ -20,6 +20,35 @@ const POS = {
   RW: "AD", LW: "AG", ST: "BU", CF: "BU",
 };
 
+// Normalisation des noms de clubs : le dataset FIFA 23 (2022-23) utilise des
+// noms courts/anonymises -> on remappe vers un nom canonique uniforme.
+const CANON = {
+  "Paris Saint Germain": "Paris Saint-Germain",
+  "Olympique Marseille": "Olympique de Marseille",
+  "Monaco": "AS Monaco",
+  "Nice": "OGC Nice",
+  "Rennes": "Stade Rennais FC",
+  "Strasbourg": "RC Strasbourg Alsace",
+  "Lille": "LOSC Lille",
+  "Nantes": "FC Nantes",
+  "Montpellier": "Montpellier Hérault SC",
+  "Lens": "Racing Club de Lens",
+  "Brest": "Stade Brestois 29",
+  "Reims": "Stade de Reims",
+  "Troyes": "ESTAC Troyes",
+  "Auxerre": "AJ Auxerre",
+  "Toulouse": "Toulouse Football Club",
+  "Lorient": "FC Lorient",
+  "Clermont": "Clermont Foot 63",
+  "Ajaccio": "AC Ajaccio",
+  "Lyon": "Olympique Lyonnais",
+  "Marseille": "Olympique de Marseille",
+  "Bordeaux": "FC Girondins de Bordeaux",
+  "Saint-Étienne": "AS Saint-Étienne",
+  "Metz": "FC Metz",
+};
+const canon = (c) => CANON[c] || c;
+
 function parseCsvLine(line) {
   const out = [];
   let cur = "";
@@ -58,7 +87,7 @@ for await (const line of rl) {
   }
   if (f[idx.league_name] !== "Ligue 1") continue;
   const name = (f[idx.short_name] || "").trim();
-  const club = (f[idx.club_name] || "").trim();
+  const club = canon((f[idx.club_name] || "").trim());
   if (!name || !club) continue;
   rows.push({
     v: parseInt(f[idx.fifa_version], 10),

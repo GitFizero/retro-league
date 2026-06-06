@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useGame } from "@/lib/store";
 import { useChallenge } from "@/lib/challenge";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Bilan } from "@/components/screens/Bilan";
+import { readReportFromHash } from "@/lib/report";
 import { Home } from "@/components/screens/Home";
 import { Draft } from "@/components/screens/Draft";
 import { Composition } from "@/components/screens/Composition";
@@ -22,10 +24,24 @@ export function Game() {
   if (!mounted) {
     return (
       <div className="min-h-screen grid place-items-center">
-        <div className="font-display text-2xl text-retro animate-pulse">
-          RETRO LEAGUE
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo.png"
+          alt="Retro League"
+          className="h-28 w-auto animate-pulse"
+        />
       </div>
+    );
+  }
+
+  // Lien de bilan partage (#bilan=...) : on affiche la page bilan en lecture
+  // seule, avant tout le reste.
+  const shared = readReportFromHash();
+  if (shared) {
+    return (
+      <ErrorBoundary>
+        <Bilan report={shared} shared />
+      </ErrorBoundary>
     );
   }
 

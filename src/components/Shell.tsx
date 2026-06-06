@@ -7,14 +7,20 @@ import { BUILD_TAG } from "@/lib/build";
 export function Masthead({ subtitle }: { subtitle?: string }) {
   return (
     <header className="border-b-4 border-double border-ink pb-3 mb-6">
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-display font-black text-4xl sm:text-5xl tracking-tight text-retro leading-none">
-            RETRO LEAGUE
-          </h1>
-          <p className="font-display italic text-ink/70 text-sm mt-1">
-            {subtitle ?? "La machine a remonter le temps du football"}
-          </p>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="Retro League"
+            className="h-14 sm:h-16 w-auto drop-shadow-sm"
+          />
+          <div>
+            <h1 className="sr-only">Retro League</h1>
+            <p className="font-display italic text-ink/70 text-sm">
+              {subtitle ?? "La machine a remonter le temps du football"}
+            </p>
+          </div>
         </div>
         <div className="text-right text-xs text-ink/60 font-display uppercase tracking-widest">
           Edition Speciale
