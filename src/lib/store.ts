@@ -590,10 +590,10 @@ export const useGame = create<GameState>()(
     }),
     {
       name: "retro-league-save",
-      // Bumped when the persisted shape changes. The draft model changed
-      // (formation-constrained XI), so older saves are incompatible: reset to a
-      // clean slate instead of crashing on rehydration.
-      version: 2,
+      // Bumped when the persisted shape changes. v3: AI clubs are real
+      // club-seasons + mercatoEnabled option + auto-play season. Older saves are
+      // incompatible: reset to a clean slate instead of rehydrating half-old.
+      version: 3,
       migrate: () => ({
         league: null,
         humanDraw: null,
@@ -774,7 +774,9 @@ function applyTrade(clubs: Club[], offer: TradeOffer): Club[] {
       return c;
     })
     .map((c) =>
-      c.isAI ? refreshAiLineup(c) : c
+      // Recompose le XI des deux cotes apres l'echange (l'humain aussi, pour ne
+      // pas garder une entree de lineup pointant vers un joueur cede).
+      c.isAI ? refreshAiLineup(c) : { ...c, lineup: autoLineup(c.squad, c.formation) }
     );
 }
 
