@@ -6,13 +6,13 @@ import { Shell, NewLeagueButton } from "@/components/Shell";
 import { Pitch, type PitchSlot } from "@/components/Pitch";
 import { useGame } from "@/lib/store";
 import { getPlayer } from "@/lib/content/teams";
-import { ALL_FORMATIONS, positionCoefficient } from "@/lib/engine/positions";
+import { positionCoefficient } from "@/lib/engine/positions";
 import {
   lineStrengths,
   outOfPositionWarnings,
   teamRating,
 } from "@/lib/engine/composition";
-import type { Line, FormationName } from "@/lib/types";
+import type { Line } from "@/lib/types";
 
 const LINE_ORDER: Line[] = ["ATK", "MID", "DEF", "GK"];
 const LINE_LABEL: Record<Line, string> = {
@@ -24,7 +24,6 @@ const LINE_LABEL: Record<Line, string> = {
 
 export function Composition() {
   const human = useGame((s) => s.humanClub());
-  const setFormation = useGame((s) => s.setFormation);
   const autoFill = useGame((s) => s.autoFill);
   const swap = useGame((s) => s.swapStarterBench);
   const startSeason = useGame((s) => s.startSeason);
@@ -58,6 +57,18 @@ export function Composition() {
     };
   });
 
+  const selectedSlot = selectedStarter
+    ? human.lineup.find((e) => e.playerId === selectedStarter)?.assignedPosition ??
+      null
+    : null;
+  const benchCanPlay = (id: string) => {
+    if (!selectedSlot) return false;
+    const p = getPlayer(id);
+    return p
+      ? [p.position, ...p.secondaryPositions].includes(selectedSlot)
+      : false;
+  };
+
   const onBenchClick = (benchId: string) => {
     if (selectedStarter) {
       swap(selectedStarter, benchId);
@@ -75,17 +86,9 @@ export function Composition() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <select
-            className="border-2 border-ink rounded-sm px-2 py-1.5 bg-paper font-display text-sm"
-            value={human.formation}
-            onChange={(e) => setFormation(e.target.value as FormationName)}
-          >
-            {ALL_FORMATIONS.map((f) => (
-              <option key={f.name} value={f.name}>
-                {f.name}
-              </option>
-            ))}
-          </select>
+          <span className="border-2 border-ink rounded-sm px-3 py-1.5 bg-paper font-display text-sm font-bold">
+            {human.formation}
+          </span>
           <button className="retro-btn text-xs" onClick={() => autoFill()}>
             Auto
           </button>
@@ -128,8 +131,13 @@ export function Composition() {
                   <li key={e.playerId}>
                     <button
                       onClick={() => onBenchClick(e.playerId)}
-                      disabled={!selectedStarter}
-                      className="w-full flex items-center justify-between gap-2 text-sm px-2 py-1 rounded-sm border border-ink/20 hover:bg-paper-dark disabled:opacity-50"
+                      disabled={!selectedStarter || !benchCanPlay(e.playerId)}
+                      title={
+                        selectedStarter && !benchCanPlay(e.playerId)
+                          ? `Ne joue pas ${selectedSlot}`
+                          : undefined
+                      }
+                      className="w-full flex items-center justify-between gap-2 text-sm px-2 py-1 rounded-sm border border-ink/20 hover:bg-paper-dark disabled:opacity-40"
                     >
                       <span className="truncate">{shortName(p.name)}</span>
                       <span className="text-ink/50 text-xs shrink-0">
