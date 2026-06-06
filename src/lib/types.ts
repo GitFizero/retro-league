@@ -147,12 +147,18 @@ export interface LineupEntry {
 
 export type SimulationMode = "rapide" | "validation";
 
+export type ClubPool = "all" | "top10";
+
 export interface League {
   id: string;
   name: string;
   inviteCode: string;
   simulationMode: SimulationMode;
   historicalDepth: HistoricalDepth;
+  /** Which historical squads feed the wheel. */
+  clubPool: ClubPool;
+  /** Human drafts 11 + 5 subs when true, else the XI only. */
+  withSubs: boolean;
   status: LeagueStatus;
   currentMatchday: number;
   clubs: Club[];

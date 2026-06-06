@@ -7,6 +7,7 @@ import { SIM_LINE_OF } from "@/lib/engine/positions";
 import type { Rng } from "@/lib/engine/rng";
 import type {
   AiPersonality,
+  ClubPool,
   Era,
   HistoricalDepth,
   HistoricalTeam,
@@ -38,17 +39,30 @@ export function versionsForDepth(depth: HistoricalDepth): Era[] {
   return DEPTH_ORDER.slice(0, maxIndex + 1);
 }
 
-export function teamsForDepth(depth: HistoricalDepth): HistoricalTeam[] {
+export function teamsForDepth(
+  depth: HistoricalDepth,
+  pool: ClubPool = "all"
+): HistoricalTeam[] {
   const allowed = new Set(versionsForDepth(depth));
-  const teams = HISTORICAL_TEAMS.filter((t) => allowed.has(t.era));
+  let teams = HISTORICAL_TEAMS.filter((t) => allowed.has(t.era));
+  // "top10": only squads that finished 1st-10th, to avoid drawing small clubs
+  // too often.
+  if (pool === "top10") {
+    const top = teams.filter((t) => (t.finalPosition ?? 99) <= 10);
+    if (top.length >= 4) teams = top;
+  }
   // Fallback: if a depth excludes every seeded team, return everything so the
   // draft is never empty in the MVP content set.
   return teams.length > 0 ? teams : HISTORICAL_TEAMS;
 }
 
 /** Step 1 of the draft: the system draws a historical team. */
-export function drawTeam(rng: Rng, depth: HistoricalDepth): HistoricalTeam {
-  return rng.pick(teamsForDepth(depth));
+export function drawTeam(
+  rng: Rng,
+  depth: HistoricalDepth,
+  pool: ClubPool = "all"
+): HistoricalTeam {
+  return rng.pick(teamsForDepth(depth, pool));
 }
 
 /** Target squad shape: 11 starters + 5 subs (Tome 1 section 11). */
@@ -146,9 +160,10 @@ export interface DraftDraw {
 export function makeHumanDraw(
   rng: Rng,
   depth: HistoricalDepth,
-  ownedIds: Set<string>
+  ownedIds: Set<string>,
+  pool: ClubPool = "all"
 ): DraftDraw {
-  const team = drawTeam(rng, depth);
+  const team = drawTeam(rng, depth, pool);
   const players = playersOfTeam(team.id);
   // Keep already-owned versions visible but the store will block re-picking.
   void ownedIds;

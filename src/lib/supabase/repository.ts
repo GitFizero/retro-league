@@ -205,6 +205,8 @@ export async function loadLeague(
     inviteCode: lg.invite_code,
     simulationMode: lg.simulation_mode,
     historicalDepth: lg.historical_depth as HistoricalDepth,
+    clubPool: "all",
+    withSubs: true,
     status: lg.status,
     currentMatchday: lg.current_matchday,
     clubs,

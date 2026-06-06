@@ -4,7 +4,12 @@ import { useState } from "react";
 import { Shell } from "@/components/Shell";
 import { useGame } from "@/lib/store";
 import { useChallenge } from "@/lib/challenge";
-import type { HistoricalDepth, SimulationMode } from "@/lib/types";
+import { ALL_FORMATIONS } from "@/lib/engine/positions";
+import type {
+  FormationName,
+  HistoricalDepth,
+  SimulationMode,
+} from "@/lib/types";
 
 const DEPTHS: { value: HistoricalDepth; label: string }[] = [
   { value: "MODERNE", label: "Epoque actuelle" },
@@ -23,11 +28,14 @@ export function Home() {
   const [mode, setMode] = useState<SimulationMode>("rapide");
   const [depth, setDepth] = useState<HistoricalDepth>("TOUTE_HISTOIRE");
   const [difficulty, setDifficulty] = useState<"normal" | "easy">("normal");
+  const [formation, setFormation] = useState<FormationName>("4-4-2");
+  const [withSubs, setWithSubs] = useState(true);
+  const [clubPool, setClubPool] = useState<"all" | "top10">("all");
 
   return (
     <Shell>
-      <section className="grid md:grid-cols-2 gap-8 items-start">
-        <div className="space-y-4">
+      <section className="flex flex-col gap-8 max-w-2xl mx-auto">
+        <div className="space-y-4 order-2">
           <h2 className="font-display text-2xl font-bold">
             Le musee interactif du football
           </h2>
@@ -71,7 +79,7 @@ export function Home() {
         </div>
 
         <form
-          className="retro-card p-5 space-y-4"
+          className="retro-card p-5 space-y-4 order-1"
           onSubmit={(e) => {
             e.preventDefault();
             createLeague({
@@ -81,6 +89,9 @@ export function Home() {
               simulationMode: mode,
               historicalDepth: depth,
               difficulty,
+              formation,
+              withSubs,
+              clubPool,
             });
           }}
         >
@@ -149,6 +160,54 @@ export function Home() {
             </div>
           </Field>
 
+          <Field label="Formation (conditionne les postes a drafter)">
+            <select
+              className="input"
+              value={formation}
+              onChange={(e) => setFormation(e.target.value as FormationName)}
+            >
+              {ALL_FORMATIONS.map((f) => (
+                <option key={f.name} value={f.name}>
+                  {f.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="Clubs proposes a la roue">
+            <div className="flex gap-2">
+              <ModeBtn
+                active={clubPool === "all"}
+                onClick={() => setClubPool("all")}
+                title="Tous les clubs"
+                desc="Tout le championnat"
+              />
+              <ModeBtn
+                active={clubPool === "top10"}
+                onClick={() => setClubPool("top10")}
+                title="Top 10"
+                desc="1er au 10e de chaque saison"
+              />
+            </div>
+          </Field>
+
+          <Field label="Effectif">
+            <div className="flex gap-2">
+              <ModeBtn
+                active={withSubs}
+                onClick={() => setWithSubs(true)}
+                title="Avec banc"
+                desc="11 + 5 remplacants"
+              />
+              <ModeBtn
+                active={!withSubs}
+                onClick={() => setWithSubs(false)}
+                title="XI seul"
+                desc="11 titulaires"
+              />
+            </div>
+          </Field>
+
           <Field label="Difficulte du tirage">
             <div className="flex gap-2">
               <ModeBtn
@@ -167,7 +226,7 @@ export function Home() {
           </Field>
 
           <button type="submit" className="retro-btn retro-btn-primary w-full">
-            Lancer le tirage
+            Lancer la saison
           </button>
         </form>
       </section>

@@ -7,18 +7,22 @@ import { unlockedAchievements, unlockedCollections } from "@/lib/content/collect
 import {
   AI_NAMES,
   PERSONALITIES,
-  bestFormationFor,
   evaluateTradeForClub,
   proposeAiTrade,
   refreshAiLineup,
 } from "@/lib/engine/ai";
 import { autoLineup } from "@/lib/engine/composition";
 import {
-  SQUAD_SIZE,
-  aiDraftSquad,
   makeHumanDraw,
   type DraftDraw,
 } from "@/lib/engine/draft";
+import {
+  aiDraftFormation,
+  draftPickable,
+  nextDraftStep,
+  slotForPlayer,
+} from "@/lib/engine/formation-draft";
+import { ALL_FORMATIONS } from "@/lib/engine/positions";
 import {
   computeStandings,
   generateFixtures,
@@ -35,8 +39,11 @@ import type {
   Club,
   FormationName,
   HistoricalDepth,
+  ClubPool,
   League,
+  LineupEntry,
   NewsItem,
+  Player,
   SimulationMode,
   StandingRow,
   TradeOffer,
@@ -54,6 +61,12 @@ export interface CreateLeagueInput {
   historicalDepth: HistoricalDepth;
   /** "normal" = aucun reroll de draft, "easy" = 3 rerolls. */
   difficulty: Difficulty;
+  /** Formation choisie avant le tirage : conditionne les postes a drafter. */
+  formation: FormationName;
+  /** Drafter 5 remplacants en plus du XI. */
+  withSubs: boolean;
+  /** Vivier de clubs propose a la roue. */
+  clubPool: ClubPool;
 }
 
 export const REROLLS: Record<Difficulty, number> = { normal: 0, easy: 3 };
@@ -109,30 +122,50 @@ function randomInviteCode(): string {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
-function newDraw(seed: number, depth: HistoricalDepth, owned: Set<string>): DraftDraw {
-  // Guarantee a pickable draw: if every shown player is already owned, re-draw
-  // for free (this is not a reroll — the player simply had no valid choice).
-  let draw = makeHumanDraw(new Rng(seed + draftCounter++), depth, owned);
-  for (let i = 0; i < 12; i++) {
-    if (draw.players.some((p) => !owned.has(p.id))) break;
-    draw = makeHumanDraw(new Rng(seed + draftCounter++), depth, owned);
+function newDraw(
+  seed: number,
+  depth: HistoricalDepth,
+  owned: Set<string>,
+  pool: ClubPool,
+  pickable: (p: Player) => boolean
+): DraftDraw {
+  // Guarantee a pickable draw: re-draw for free if no shown player can be
+  // selected (this is not a reroll — the player simply had no valid choice).
+  let draw = makeHumanDraw(new Rng(seed + draftCounter++), depth, owned, pool);
+  for (let i = 0; i < 20; i++) {
+    if (draw.players.some(pickable)) break;
+    draw = makeHumanDraw(new Rng(seed + draftCounter++), depth, owned, pool);
   }
   return draw;
 }
 
+const AI_FORMATION: Record<string, FormationName> = {
+  offensive: "4-3-3",
+  conservatrice: "4-2-3-1",
+  collectionneur: "3-5-2",
+  equilibree: "4-4-2",
+};
+
 function buildAiClubs(
   count: number,
   depth: HistoricalDepth,
-  seed: number
+  seed: number,
+  pool: ClubPool
 ): Club[] {
   const rng = new Rng(seed);
   const names = rng.shuffle(AI_NAMES).slice(0, count);
   return names.map((name, i) => {
     const personality = PERSONALITIES[i % PERSONALITIES.length];
-    const squad = aiDraftSquad(
+    // Each AI plays a formation that suits its personality.
+    const formation =
+      AI_FORMATION[personality] ??
+      ALL_FORMATIONS[i % ALL_FORMATIONS.length].name;
+    const { squad, lineup } = aiDraftFormation(
       new Rng(seed + i * 7919 + 1),
       depth,
-      personality
+      personality,
+      formation,
+      pool
     );
     const base: Club = {
       id: `ai_${i}`,
@@ -140,11 +173,11 @@ function buildAiClubs(
       isAI: true,
       personality,
       squad,
-      lineup: [],
-      formation: "4-4-2",
+      lineup,
+      formation,
       form: 0,
     };
-    return refreshAiLineup(base);
+    return base;
   });
 }
 
@@ -164,7 +197,12 @@ export const useGame = create<GameState>()(
       createLeague: (input) => {
         const seed = Math.floor(Math.random() * 1e9);
         const aiCount = Math.max(1, input.clubCount - 1);
-        const aiClubs = buildAiClubs(aiCount, input.historicalDepth, seed);
+        const aiClubs = buildAiClubs(
+          aiCount,
+          input.historicalDepth,
+          seed,
+          input.clubPool
+        );
 
         const human: Club = {
           id: HUMAN_CLUB_ID,
@@ -172,7 +210,7 @@ export const useGame = create<GameState>()(
           isAI: false,
           squad: [],
           lineup: [],
-          formation: "4-4-2",
+          formation: input.formation,
           form: 0,
         };
 
@@ -185,6 +223,8 @@ export const useGame = create<GameState>()(
           inviteCode: randomInviteCode(),
           simulationMode: input.simulationMode,
           historicalDepth: input.historicalDepth,
+          clubPool: input.clubPool,
+          withSubs: input.withSubs,
           status: "draft",
           currentMatchday: 1,
           clubs,
@@ -201,7 +241,13 @@ export const useGame = create<GameState>()(
           palmares: [],
           rerollsLeft: REROLLS[input.difficulty],
           news: [],
-          humanDraw: newDraw(seed, input.historicalDepth, new Set()),
+          humanDraw: newDraw(
+            seed,
+            input.historicalDepth,
+            new Set(),
+            input.clubPool,
+            (p) => draftPickable(p, human, input.withSubs, new Set())
+          ),
         });
       },
 
@@ -211,31 +257,49 @@ export const useGame = create<GameState>()(
         const human = league.clubs.find((c) => c.id === HUMAN_CLUB_ID);
         if (!human) return;
         if (human.squad.includes(playerId)) return;
-        if (!humanDraw.players.some((p) => p.id === playerId)) return;
+        const player = humanDraw.players.find((p) => p.id === playerId);
+        if (!player) return;
+
+        const step = nextDraftStep(human, league.withSubs);
+        let entry: LineupEntry;
+        if (step.kind === "xi") {
+          // Formation-constrained: the player must fit a still-open slot.
+          const slot = slotForPlayer(player, step.remaining);
+          if (!slot) return; // poste deja complet — non selectionnable
+          entry = { playerId, starter: true, assignedPosition: slot };
+        } else if (step.kind === "bench") {
+          entry = {
+            playerId,
+            starter: false,
+            assignedPosition: player.position,
+            benchOrder: step.benchIndex,
+          };
+        } else {
+          return;
+        }
 
         const squad = [...human.squad, playerId];
+        const lineup = [...human.lineup, entry];
+        const nextHuman: Club = { ...human, squad, lineup };
         const clubs = league.clubs.map((c) =>
-          c.id === HUMAN_CLUB_ID ? { ...c, squad } : c
+          c.id === HUMAN_CLUB_ID ? nextHuman : c
         );
 
-        if (squad.length >= SQUAD_SIZE) {
-          const formation = bestFormationFor(squad);
-          const finalClubs = clubs.map((c) =>
-            c.id === HUMAN_CLUB_ID
-              ? { ...c, formation, lineup: autoLineup(squad, formation) }
-              : c
-          );
+        if (nextDraftStep(nextHuman, league.withSubs).kind === "done") {
           set({
-            league: { ...league, clubs: finalClubs, status: "composition" },
+            league: { ...league, clubs, status: "composition" },
             humanDraw: null,
           });
         } else {
+          const owned = new Set(squad);
           set({
             league: { ...league, clubs },
             humanDraw: newDraw(
               draftSeed,
               league.historicalDepth,
-              new Set(squad)
+              owned,
+              league.clubPool,
+              (p) => draftPickable(p, nextHuman, league.withSubs, owned)
             ),
           });
         }
@@ -245,12 +309,16 @@ export const useGame = create<GameState>()(
         const { league, draftSeed, rerollsLeft } = get();
         if (!league || rerollsLeft <= 0) return; // pas de reroll en mode normal
         const human = league.clubs.find((c) => c.id === HUMAN_CLUB_ID);
+        if (!human) return;
+        const owned = new Set(human.squad);
         set({
           rerollsLeft: rerollsLeft - 1,
           humanDraw: newDraw(
             draftSeed,
             league.historicalDepth,
-            new Set(human?.squad ?? [])
+            owned,
+            league.clubPool,
+            (p) => draftPickable(p, human, league.withSubs, owned)
           ),
         });
       },
@@ -497,7 +565,36 @@ export const useGame = create<GameState>()(
         return league?.clubs.find((c) => c.id === HUMAN_CLUB_ID);
       },
     }),
-    { name: "retro-league-save" }
+    {
+      name: "retro-league-save",
+      // Bumped when the persisted shape changes. The draft model changed
+      // (formation-constrained XI), so older saves are incompatible: reset to a
+      // clean slate instead of crashing on rehydration.
+      version: 2,
+      migrate: () => ({
+        league: null,
+        humanDraw: null,
+        draftSeed: 0,
+        mercatoDone: false,
+        offers: [],
+        seasonNumber: 1,
+        palmares: [],
+        rerollsLeft: 0,
+        news: [],
+      }),
+      // Defensive: guarantee arrays exist even if a partial state slips through.
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<GameState>;
+        return {
+          ...current,
+          ...p,
+          offers: p.offers ?? [],
+          palmares: p.palmares ?? [],
+          news: p.news ?? [],
+          rerollsLeft: p.rerollsLeft ?? 0,
+        };
+      },
+    }
   )
 );
 

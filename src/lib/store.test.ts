@@ -1,19 +1,25 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { useGame, HUMAN_CLUB_ID } from "@/lib/store";
-import { SQUAD_SIZE } from "@/lib/engine/draft";
+import { draftPickable, draftTarget } from "@/lib/engine/formation-draft";
 import { getPlayer } from "@/lib/content/teams";
+
+const XI = draftTarget("4-4-2", true); // 11 + 5 subs
 
 const overallOf = (id: string) => getPlayer(id)?.overall ?? 0;
 
-/** Drive the human draft to completion by always taking the first new player. */
+/** Drive the human draft to completion by taking the first pickable player. */
 function autoDraft() {
   let guard = 0;
   while (useGame.getState().league?.status === "draft" && guard < 400) {
     guard++;
     const draw = useGame.getState().humanDraw;
     const human = useGame.getState().humanClub();
+    const withSubs = useGame.getState().league?.withSubs ?? true;
     if (!draw || !human) break;
-    const pick = draw.players.find((p) => !human.squad.includes(p.id));
+    const owned = new Set(human.squad);
+    const pick = draw.players.find((p) =>
+      draftPickable(p, human, withSubs, owned)
+    );
     if (pick) useGame.getState().pickHumanPlayer(pick.id);
     else useGame.getState().skipDraw();
   }
@@ -44,12 +50,15 @@ describe("game store — full loop & multi-season", () => {
       simulationMode: "rapide",
       historicalDepth: "TOUTE_HISTOIRE",
       difficulty: "normal",
+      formation: "4-4-2",
+      withSubs: true,
+      clubPool: "all",
     });
     expect(useGame.getState().league?.status).toBe("draft");
 
     autoDraft();
     const human = useGame.getState().humanClub();
-    expect(human?.squad.length).toBe(SQUAD_SIZE);
+    expect(human?.squad.length).toBe(XI);
     expect(useGame.getState().league?.status).toBe("composition");
 
     useGame.getState().startSeason();
@@ -67,6 +76,9 @@ describe("game store — full loop & multi-season", () => {
       simulationMode: "rapide",
       historicalDepth: "DEPUIS_2007",
       difficulty: "normal",
+      formation: "4-4-2",
+      withSubs: true,
+      clubPool: "all",
     });
     autoDraft();
     useGame.getState().startSeason();
@@ -98,6 +110,9 @@ describe("game store — full loop & multi-season", () => {
       simulationMode: "rapide",
       historicalDepth: "TOUTE_HISTOIRE",
       difficulty: "normal",
+      formation: "4-4-2",
+      withSubs: true,
+      clubPool: "all",
     });
     autoDraft();
     const before = useGame.getState();
